@@ -64,7 +64,7 @@ imputing_HFs_allout_u5_list <- sapply(consec_NA_list_allout_u5_reshaped, functio
     na_rows <- which(x$is.NA == TRUE);
     num_NAs <- sum(x[na_rows, "consec vals"]);
     
-    if (num_NAs <= 5 & sum(x[na_rows, "consec vals"] <= 2))
+    if (num_NAs > 0 & num_NAs <= 5 & !(0 %in% as.numeric(x[na_rows, "consec vals"] <= 2)))
     {
         return(TRUE)
     } else {
@@ -78,22 +78,103 @@ imputing_HFs_allout_u5_data <- HF_cases[which(HF_cases$UID %in% names(imputing_H
 
 imputing_HFs_allout_u5_data_list <- split(imputing_HFs_allout_u5_data$allout_u5, as.character(imputing_HFs_allout_u5_data$UID))
 
-new_imputed_HFs_allout_u5_data_list <- lapply(imputing_HFs_allout_u5_data_list, function(x) {
+# new_imputed_HFs_allout_u5_data_list <- lapply(imputing_HFs_allout_u5_data_list, function(x) {
+#     
+#     # Normalizing ts first
+#     na_inds <- which(is.na(x));
+#     tmp_x <- x[-na_inds];
+#     
+#     x_mean <- mean(tmp_x);
+#     x_sd <- sd(tmp_x);
+#     x_norm <- (tmp_x - x_mean) / x_sd;
+#     
+#     x[which(!is.na(x))] <- x_norm;
+#     
+#     
+#     cases_ts <- ts(x, start = c(2015, 1), deltat = 1/12);
+#     
+#     if (sum(tmp_x, na.rm = T) > 0)
+#     {
+#         imp_cases <- tryCatch({
+#             na_seadec(cases_ts, algorithm = "kalman");
+#         },
+#         warning = function(cond){
+#             print("ummm");
+#             na_seadec(cases_ts, algorithm = "ma");
+#         })
+#     } else {
+#         imp_cases <- na_seadec(cases_ts, algorithm = "ma");
+#     }
+#     
+#     # un-normalizing
+#     imp_cases <- (imp_cases * x_sd) + x_mean
+#     
+#     
+#     return(as.numeric(round(imp_cases))); # we round to preserve whole numbers
+# })
+
+
+
+new_imputed_HFs_allout_u5_data_list <- list()
+
+for (i in 1:length(imputing_HFs_allout_u5_data_list))
+{
+    x <- imputing_HFs_allout_u5_data_list[[i]]
+    
+    # Normalizing ts first
+    na_inds <- which(is.na(x));
+    tmp_x <- x[-na_inds];
+    
+    if (sum(tmp_x) != 0)
+    {
+        x_mean <- mean(tmp_x);
+        x_sd <- sd(tmp_x);
+        x_norm <- (tmp_x - x_mean) / x_sd;
+        
+        x[which(!is.na(x))] <- x_norm;
+    }
+    
     cases_ts <- ts(x, start = c(2015, 1), deltat = 1/12);
     
-    if (sum(cases_ts, na.rm = T) > 0)
+    if (sum(tmp_x, na.rm = T) > 0)
     {
         imp_cases <- tryCatch({
             na_seadec(cases_ts, algorithm = "kalman");
         },
         warning = function(cond){
+            print("ummm");
             na_seadec(cases_ts, algorithm = "ma");
         })
     } else {
         imp_cases <- na_seadec(cases_ts, algorithm = "ma");
     }
-    return(as.numeric(round(imp_cases))); # we round to preserve whole numbers
-})
+    
+    # un-normalizing
+    if (sum(tmp_x) != 0)
+    {
+        imp_cases <- (imp_cases * x_sd) + x_mean;
+    }
+    
+    new_imputed_HFs_allout_u5_data_list[[i]] <- imp_cases
+}
+
+
+names(new_imputed_HFs_allout_u5_data_list) <- names(imputing_HFs_allout_u5_data_list)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -128,7 +209,7 @@ imputing_HFs_conf_u5_list <- sapply(consec_NA_list_conf_u5_reshaped, function(x)
     na_rows <- which(x$is.NA == TRUE);
     num_NAs <- sum(x[na_rows, "consec vals"]);
     
-    if (num_NAs <= 5 & sum(x[na_rows, "consec vals"] <= 2))
+    if (num_NAs > 0 & num_NAs <= 5 & !(0 %in% as.numeric(x[na_rows, "consec vals"] <= 2)))
     {
         return(TRUE)
     } else {
@@ -143,19 +224,37 @@ imputing_HFs_conf_u5_data <- HF_cases[which(HF_cases$UID %in% names(imputing_HFs
 imputing_HFs_conf_u5_data_list <- split(imputing_HFs_conf_u5_data$conf_rdt_u5, as.character(imputing_HFs_conf_u5_data$UID))
 
 new_imputed_HFs_conf_u5_data_list <- lapply(imputing_HFs_conf_u5_data_list, function(x) {
+    
+    # Normalizing ts first
+    na_inds <- which(is.na(x));
+    tmp_x <- x[-na_inds];
+    
+    x_mean <- mean(tmp_x);
+    x_sd <- sd(tmp_x);
+    x_norm <- (tmp_x - x_mean) / x_sd;
+    
+    x[which(!is.na(x))] <- x_norm;
+    
+    
     cases_ts <- ts(x, start = c(2015, 1), deltat = 1/12);
 
-    if (sum(cases_ts, na.rm = T) > 0)
+    if (sum(tmp_x, na.rm = T) > 0)
     {
         imp_cases <- tryCatch({
             na_seadec(cases_ts, algorithm = "kalman");
         },
         warning = function(cond){
+            print("ummm")
             na_seadec(cases_ts, algorithm = "ma");
         })
     } else {
         imp_cases <- na_seadec(cases_ts, algorithm = "ma");
     }
+    
+    # un-normalizing
+    imp_cases <- (imp_cases * x_sd) + x_mean;
+    
+    
     return(as.numeric(round(imp_cases))); # we round to preserve whole numbers
 })
 
@@ -181,12 +280,12 @@ HF_cases[which(HF_cases$conf_rdt_u5 < 0), "conf_rdt_u5"] <- 0
 
 
 ####################################################################
+
+
 HF_cases$conf_rdt_mic_u5 <- rowSums(HF_cases[,c("conf_rdt_u5", "conf_mic_u5")], na.rm = T)
 
 
 
-
-
-write.csv(HF_cases, "~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_kalman.csv", row.names = FALSE)
+# write.csv(HF_cases, "~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_kalman.csv", row.names = FALSE)
 
 
