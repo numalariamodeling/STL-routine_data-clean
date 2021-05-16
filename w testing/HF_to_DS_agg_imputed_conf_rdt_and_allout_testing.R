@@ -22,7 +22,7 @@ require("zoo")
 
 # Loading health facility dataset
 
-HF_cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_MA.csv", stringsAsFactors = FALSE)
+HF_cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_testing_MA.csv", stringsAsFactors = FALSE)
 
 
 
@@ -32,7 +32,10 @@ HF_cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_
 good_rows <- which(!is.na(HF_cases$conf_rdt_u5) &
                        !is.na(HF_cases$allout_u5) &
                        HF_cases$allout_u5 != 0 &
-                       HF_cases$conf_rdt_mic_u5 <= HF_cases$allout_u5)
+                       HF_cases$conf_rdt_mic_u5 <= HF_cases$allout_u5 &
+                       HF_cases$conf_rdt_mic_u5 <= HF_cases$test_rdt_mic_u5)
+
+
 
 HF_cases_good <- HF_cases[good_rows,]
 
@@ -42,7 +45,7 @@ bad_rows_age2 <- which(is.na(HF_cases_good$conf_rdt_age2) & !is.na(HF_cases_good
                            HF_cases_good$conf_rdt_age1 == HF_cases_good$conf_rdt_u5)
 HF_cases_good <- HF_cases_good[-c(bad_rows_age1, bad_rows_age2),]
 
-# 46655 removed
+# 47507 removed
 
 
 #################################################################################################################################
@@ -70,7 +73,7 @@ D_cases <- left_join(D_cases, unique_rows,
 
 # Saving
 
-write.csv(D_cases, "~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_DS_cases_seasonal_smc_good_rows_MA_imputes.csv", row.names = FALSE)
+write.csv(D_cases, "~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_DS_cases_seasonal_smc_good_rows_MA_imputes_testing.csv", row.names = FALSE)
 
 
 

@@ -164,7 +164,7 @@ for (DS in sort(unique(cases$District)))
     cases_dist <- cases[which(cases$District == DS),]
     cases_dist <- cases_dist[order(cases_dist$Date),]
     
- 
+    
     
     mal_cases_ts <- ts(cases_dist$mal_cases_norm, start = c(2015, 1), deltat = 1/12)
     cases_stl <- stlplus(mal_cases_ts, s.window = "periodic")
@@ -194,7 +194,7 @@ for (DS in sort(unique(cases$District)))
     STL_result_DF_DS <- rbind(cases_stl_ts,
                               ratio_stl_ts)
     STL_result_DF_DS$District <- DS
-    STL_result_DF_DS$SMC.init_date <- unique(cases_dist$SMC.init_date)
+    STL_result_DF_DS$Region <- unique(cases_dist$Region)
     STL_result_DF <- rbind(STL_result_DF,
                            STL_result_DF_DS)
     
@@ -219,31 +219,31 @@ STL_result_DF$lwd <- 1
 
 
 
-# Creating dataset for aggregated districts by SMC rollout group (SMC.init_date)
+# Creating dataset for aggregated districts by Region
 
-cases_SMCinit_agg <- ddply(cases, c(.(SMC.init_date), .(Date)), summarise,
-                           conf_rdt_mic_u5 = sum(conf_rdt_mic_u5),
-                           allout_u5 = sum(allout_u5),
-                           U5_pop = sum(U5_pop),
-                           SMC.received = mean(SMC.received))
+cases_Region_agg <- ddply(cases, c(.(Region), .(Date)), summarise,
+                          conf_rdt_mic_u5 = sum(conf_rdt_mic_u5),
+                          allout_u5 = sum(allout_u5),
+                          U5_pop = sum(U5_pop),
+                          SMC.received = mean(SMC.received))
 
 # If a district only receives 3 rounds of SMC (not 4)
 
-cases_SMCinit_agg[cases_SMCinit_agg$SMC.received > 0, "SMC.received"] <- 1
+cases_Region_agg[cases_Region_agg$SMC.received > 0, "SMC.received"] <- 1
 
 
 
 ## Making malaria variables
 
-cases_SMCinit_agg$mal_cases <- cases_SMCinit_agg$conf_rdt_mic_u5 / (cases_SMCinit_agg$U5_pop/1000)
-cases_SMCinit_agg$mal_ratio <- cases_SMCinit_agg$conf_rdt_mic_u5 / cases_SMCinit_agg$allout_u5
+cases_Region_agg$mal_cases <- cases_Region_agg$conf_rdt_mic_u5 / (cases_Region_agg$U5_pop/1000)
+cases_Region_agg$mal_ratio <- cases_Region_agg$conf_rdt_mic_u5 / cases_Region_agg$allout_u5
 
 
 
 ## Standardizing both malaria variables across all districts
 
-cases_SMCinit_agg$mal_cases_norm <- getNormalized(cases_SMCinit_agg$mal_cases)
-cases_SMCinit_agg$mal_ratio_norm <- getNormalized(cases_SMCinit_agg$mal_ratio)
+cases_Region_agg$mal_cases_norm <- getNormalized(cases_Region_agg$mal_cases)
+cases_Region_agg$mal_ratio_norm <- getNormalized(cases_Region_agg$mal_ratio)
 
 
 
@@ -254,19 +254,19 @@ cases_SMCinit_agg$mal_ratio_norm <- getNormalized(cases_SMCinit_agg$mal_ratio)
 # i.e. aggregate of all districts belonging to the same rollout group
 # For both malaria variables 
 
-STL_result_DF_SMCinit <- data.frame()
+STL_result_DF_Region <- data.frame()
 
-for (Y in sort(unique(cases_SMCinit_agg$SMC.init_date)))
+for (R in sort(unique(cases_Region_agg$Region)))
 {
-    cases_year <- cases_SMCinit_agg[which(cases_SMCinit_agg$SMC.init_date == Y),]
-    cases_year <- cases_year[order(cases_year$Date),]
+    cases_region <- cases_Region_agg[which(cases_Region_agg$Region == R),]
+    cases_region <- cases_region[order(cases_region$Date),]
     
     
-    mal_cases_ts <- ts(cases_year$mal_cases_norm, start = c(2015, 1), deltat = 1/12)
+    mal_cases_ts <- ts(cases_region$mal_cases_norm, start = c(2015, 1), deltat = 1/12)
     cases_stl <- stlplus(mal_cases_ts, s.window = "periodic")
     
- 
-    mal_ratio_ts <- ts(cases_year$mal_ratio_norm, start = c(2015, 1), deltat = 1/12)
+    
+    mal_ratio_ts <- ts(cases_region$mal_ratio_norm, start = c(2015, 1), deltat = 1/12)
     ratio_stl <- stlplus(mal_ratio_ts, s.window = "periodic")
     
     
@@ -285,20 +285,20 @@ for (Y in sort(unique(cases_SMCinit_agg$SMC.init_date)))
     ratio_stl_ts$dates <- dates
     
     
-    STL_result_DF_SMCinit_Y <- rbind(cases_stl_ts,
-                                     ratio_stl_ts)
-    STL_result_DF_SMCinit_Y$District <- paste("master", Y, sep = " ")
-    STL_result_DF_SMCinit_Y$SMC.init_date <- Y
-    STL_result_DF_SMCinit <- rbind(STL_result_DF_SMCinit,
-                                   STL_result_DF_SMCinit_Y)
+    STL_result_DF_Region_R <- rbind(cases_stl_ts,
+                                    ratio_stl_ts)
+    STL_result_DF_Region_R$District <- paste("master", R, sep = " ")
+    STL_result_DF_Region_R$Region <- R
+    STL_result_DF_Region <- rbind(STL_result_DF_Region,
+                                  STL_result_DF_Region_R)
     
 }
 
 
 # Setting figure descriptors for ease of plotting with ggplot2
 
-STL_result_DF_SMCinit$alpha <- 1
-STL_result_DF_SMCinit$lwd <- 1.5
+STL_result_DF_Region$alpha <- 1
+STL_result_DF_Region$lwd <- 1.5
 
 
 
@@ -309,44 +309,97 @@ STL_result_DF_SMCinit$lwd <- 1.5
 
 # Joining both dataframes for plotting
 
-STL_result_DF_master <- rbind(STL_result_DF, STL_result_DF_SMCinit)
+STL_result_DF_master <- rbind(STL_result_DF, STL_result_DF_Region)
 STL_result_DF_master$lty <- factor(STL_result_DF_master$lty, levels = c("solid", "longdash"))
 
 
-color_list <- c("#984EA3", "#E41A1C", "#4DAF4A", "#377EB8", "#D95F02", "#E6AB02")
+# color_list <- c("#984EA3", "#E41A1C", "#4DAF4A", "#377EB8", "#D95F02", "#E6AB02")
 
 
 # Figure 4
-# Trend component of each district, grouped by SMC rollout group
-# Along with overall trend of aggregate SMC rollout group
+# Trend component of each district, grouped by Region
+# Along with overall trend of aggregate Region
 
-plot_cases_trend_for_grid <- ggplot(data = STL_result_DF_master[which(STL_result_DF_master$type == "cases"),],
+regions1 <- unique(STL_result_DF_master$Region)[1:6]
+regions2 <- unique(STL_result_DF_master$Region)[7:13]
+
+
+
+plot_cases_trend_for_grid <- ggplot(data = STL_result_DF_master[which(STL_result_DF_master$type == "cases" &
+                                                                          STL_result_DF_master$Region %in% regions1),],
                                     aes(x = dates, y = trend)) +
     geom_line(aes(group = District,
-                  color = as.factor(SMC.init_date),
+                  color = as.factor(Region),
                   alpha = factor(alpha),
                   size = factor(lwd)),
               show.legend = FALSE) +
     scale_alpha_manual(values = unique(STL_result_DF_master$alpha)) +
     scale_size_manual(values = unique(STL_result_DF_master$lwd)) +
-    scale_color_manual(values = color_list) +
-    xlab("") + facet_wrap(~SMC.init_date, ncol = 1, scales = "free") +
-    theme(strip.background = element_blank(), 
-          strip.text.x = element_blank())
+    # scale_color_manual(values = color_list) +
+    xlab("") + facet_wrap(~Region, ncol = 1, scales = "free") +
+    theme_bw() + theme(plot.title = element_text(hjust = 0.5),
+                       axis.text.y = element_text(colour = "black"),
+                       axis.text.x = element_text(colour = "black"),
+                       panel.border = element_rect(colour = "black", fill = NA),
+                       panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
-plot_ratio_trend_for_grid <- ggplot(data = STL_result_DF_master[which(STL_result_DF_master$type == "ratio"),],
+plot_ratio_trend_for_grid <- ggplot(data = STL_result_DF_master[which(STL_result_DF_master$type == "ratio" &
+                                                                          STL_result_DF_master$Region %in% regions1),],
                                     aes(x = dates, y = trend)) +
     geom_line(aes(group = District,
-                  color = as.factor(SMC.init_date),
+                  color = as.factor(Region),
                   alpha = factor(alpha),
                   size = factor(lwd)),
               show.legend = FALSE) +
     scale_alpha_manual(values = unique(STL_result_DF_master$alpha)) +
     scale_size_manual(values = unique(STL_result_DF_master$lwd)) +
-    scale_color_manual(values = color_list) +
-    xlab("") + ylab("") + facet_wrap(~SMC.init_date, ncol = 1, scales = "free") +
-    theme(strip.background = element_blank(), 
-          strip.text.x = element_blank())
+    # scale_color_manual(values = color_list) +
+    xlab("") + ylab("") + facet_wrap(~Region, ncol = 1, scales = "free") +
+    theme_bw() + theme(plot.title = element_text(hjust = 0.5),
+                       axis.text.y = element_text(colour = "black"),
+                       axis.text.x = element_text(colour = "black"),
+                       panel.border = element_rect(colour = "black", fill = NA),
+                       panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+grid.arrange(plot_cases_trend_for_grid, plot_ratio_trend_for_grid, ncol = 2)
+
+
+
+plot_cases_trend_for_grid <- ggplot(data = STL_result_DF_master[which(STL_result_DF_master$type == "cases" &
+                                                                          STL_result_DF_master$Region %in% regions2),],
+                                    aes(x = dates, y = trend)) +
+    geom_line(aes(group = District,
+                  color = as.factor(Region),
+                  alpha = factor(alpha),
+                  size = factor(lwd)),
+              show.legend = FALSE) +
+    scale_alpha_manual(values = unique(STL_result_DF_master$alpha)) +
+    scale_size_manual(values = unique(STL_result_DF_master$lwd)) +
+    # scale_color_manual(values = color_list) +
+    xlab("") + facet_wrap(~Region, ncol = 1, scales = "free") +
+    theme_bw() + theme(plot.title = element_text(hjust = 0.5),
+                       axis.text.y = element_text(colour = "black"),
+                       axis.text.x = element_text(colour = "black"),
+                       panel.border = element_rect(colour = "black", fill = NA),
+                       panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+plot_ratio_trend_for_grid <- ggplot(data = STL_result_DF_master[which(STL_result_DF_master$type == "ratio" &
+                                                                          STL_result_DF_master$Region %in% regions2),],
+                                    aes(x = dates, y = trend)) +
+    geom_line(aes(group = District,
+                  color = as.factor(Region),
+                  alpha = factor(alpha),
+                  size = factor(lwd)),
+              show.legend = FALSE) +
+    scale_alpha_manual(values = unique(STL_result_DF_master$alpha)) +
+    scale_size_manual(values = unique(STL_result_DF_master$lwd)) +
+    # scale_color_manual(values = color_list) +
+    xlab("") + ylab("") + facet_wrap(~Region, ncol = 1, scales = "free") +
+    theme_bw() + theme(plot.title = element_text(hjust = 0.5),
+                       axis.text.y = element_text(colour = "black"),
+                       axis.text.x = element_text(colour = "black"),
+                       panel.border = element_rect(colour = "black", fill = NA),
+                       panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 grid.arrange(plot_cases_trend_for_grid, plot_ratio_trend_for_grid, ncol = 2)
 
@@ -355,17 +408,26 @@ grid.arrange(plot_cases_trend_for_grid, plot_ratio_trend_for_grid, ncol = 2)
 
 
 
-# Trend of SMC rollout groups together (bottom row of Figure 4)
 
-ggplot(data = STL_result_DF_SMCinit,
+
+
+
+# Trend of Regions together (bottom row of Figure 4)
+
+ggplot(data = STL_result_DF_Region,
        aes(x = dates, y = trend)) +
     geom_line(aes(group = District,
-                  color = as.factor(SMC.init_date),
+                  color = as.factor(Region),
                   size = factor(lwd))) +
     scale_alpha_manual(values = unique(STL_result_DF_master$alpha)) +
     scale_size_manual(values = unique(STL_result_DF_master$lwd)) +
-    scale_color_manual(values = color_list) +
-    xlab("") + facet_wrap(~type, scales = "free")
+    # scale_color_manual(values = color_list) +
+    xlab("") + facet_wrap(~type, scales = "free") +
+    theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.y = element_text(colour = "black"),
+                       axis.text.x = element_text(colour = "black", angle = 45, hjust = 1),
+                       panel.border = element_rect(colour = "black", fill = NA),
+                       panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+                       axis.line = element_line(colour = "black"))
 
 
 

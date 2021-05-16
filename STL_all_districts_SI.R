@@ -47,7 +47,7 @@ getNormalized <- function(vec)
 # Loading health district dataset
 # Creating under-5 population column and fixing date column
 
-cases <- read.csv("/Users/sebas/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_DS_cases_seasonal_smc_good_rows_kalman_imputes.csv", header  = TRUE, strip.white = TRUE, stringsAsFactors = FALSE)
+cases <- read.csv("/Users/sebas/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_DS_cases_seasonal_smc_good_rows_MA_imputes.csv", header  = TRUE, strip.white = TRUE, stringsAsFactors = FALSE)
 cases$U5_pop <- cases$District.Pop * .18
 cases$Date <- as.yearmon(cases$Date)
 
