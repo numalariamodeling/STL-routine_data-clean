@@ -167,7 +167,15 @@ pop_data[which(pop_data$Admin2 == "N'Dorola"), "Admin2"] <- "Ndorola"
 pop_data[which(pop_data$Admin2 == "Sig-Noghin"), "Admin2"] <- "Sig-noghin"
 names(pop_data)[1:4] <- c("Region", "District", "year", "month")
 
-cases_new <- inner_join(cases_new, pop_data[1:5], by=c("Region", "District", "year", "month"))
+
+
+pop_join_data <- unique(pop_data[c(1:3, 5)])
+pop_join_data <- pop_join_data[order(pop_join_data$District, pop_join_data$year),]
+## removing bad population rows, incorrect data for 4 districts in 2018
+pop_join_data <- pop_join_data[-c(139, 176, 255, 274),]
+
+
+cases_new <- inner_join(cases_new, pop_join_data, by=c("Region", "District", "year"))
 cases_new <- cases_new[,c(1:8, 166:167, 9:165)]
 names(cases_new)[which(names(cases_new) == "Population")] <- "District Pop"
 

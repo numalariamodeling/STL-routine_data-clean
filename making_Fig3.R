@@ -84,7 +84,9 @@ ggplot(cases, aes(x = Date, y =  conf_rdt_mic_u5 / test_rdt_mic_u5,
     theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
                        panel.border = element_blank(), panel.grid.major = element_blank(),
                        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
-# 
+
+
+ 
 # 
 # ggplot(cases, aes(x = Date, y =  conf_rdt_mic_u5 / test_rdt_mic_u5,
 #                   group = as.factor(District))) +
@@ -97,6 +99,21 @@ ggplot(cases, aes(x = Date, y =  conf_rdt_mic_u5 / test_rdt_mic_u5,
 #                        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
 # 
 # 
+
+
+
+ggplot(cases, aes(x = Date, y =  allout_u5 / (U5_pop/1000),
+                  group = as.factor(District))) +
+    geom_line(alpha = 0.25, size = 1, show.legend = FALSE, color = "blue") + ylab("Cases per 1000") +
+    ggtitle("All-cause outpatient visits among children under 5") +
+    scale_x_yearmon("Date", breaks = sort(unique(cases$Date))[c(seq(1,48,6), 48)],
+                    labels = sort(unique(cases$Date))[c(seq(1,48,6), 48)]) +
+    theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+                       panel.border = element_blank(), panel.grid.major = element_blank(),
+                       panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
+
+
+
 
 
 
@@ -123,28 +140,28 @@ ggplot(cases, aes(x = Date, y = maltreat_u5 / (U5_pop/1000),
 # 
 # 
 
-
-ggplot(cases, aes(x = Date, y = maltreat_age1 / (U5_pop/1000),
-                  group = as.factor(District))) +
-    geom_line(alpha = 0.25, size = 1, show.legend = FALSE, color = "blue") + ylab("") +
-    ggtitle("maltreat age1 per 1000") +
-    scale_x_yearmon("Date", breaks = sort(unique(cases$Date))[c(seq(1,48,6), 48)],
-                    labels = sort(unique(cases$Date))[c(seq(1,48,6), 48)]) +
-    theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
-                       panel.border = element_blank(), panel.grid.major = element_blank(),
-                       panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
-
-
-ggplot(cases, aes(x = Date, y = maltreat_age2 / (U5_pop/1000),
-                  group = as.factor(District))) +
-    geom_line(alpha = 0.25, size = 1, show.legend = FALSE, color = "blue") + ylab("") +
-    ggtitle("maltreat age2 per 1000") +
-    scale_x_yearmon("Date", breaks = sort(unique(cases$Date))[c(seq(1,48,6), 48)],
-                    labels = sort(unique(cases$Date))[c(seq(1,48,6), 48)]) +
-    theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
-                       panel.border = element_blank(), panel.grid.major = element_blank(),
-                       panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
-
+# 
+# ggplot(cases, aes(x = Date, y = maltreat_age1 / (U5_pop/1000),
+#                   group = as.factor(District))) +
+#     geom_line(alpha = 0.25, size = 1, show.legend = FALSE, color = "blue") + ylab("") +
+#     ggtitle("maltreat age1 per 1000") +
+#     scale_x_yearmon("Date", breaks = sort(unique(cases$Date))[c(seq(1,48,6), 48)],
+#                     labels = sort(unique(cases$Date))[c(seq(1,48,6), 48)]) +
+#     theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+#                        panel.border = element_blank(), panel.grid.major = element_blank(),
+#                        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
+# 
+# 
+# ggplot(cases, aes(x = Date, y = maltreat_age2 / (U5_pop/1000),
+#                   group = as.factor(District))) +
+#     geom_line(alpha = 0.25, size = 1, show.legend = FALSE, color = "blue") + ylab("") +
+#     ggtitle("maltreat age2 per 1000") +
+#     scale_x_yearmon("Date", breaks = sort(unique(cases$Date))[c(seq(1,48,6), 48)],
+#                     labels = sort(unique(cases$Date))[c(seq(1,48,6), 48)]) +
+#     theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+#                        panel.border = element_blank(), panel.grid.major = element_blank(),
+#                        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
+# 
 
 
 
@@ -166,6 +183,20 @@ ggplot(cases, aes(x = Date, y = susp_u5 / (U5_pop/1000),
 
 
 
+ggplot(cases, aes(x = Date, y = pres_u5 / (U5_pop/1000),
+                  group = as.factor(District))) +
+    geom_line(alpha = 0.25, size = 1, show.legend = FALSE, color = "blue") + ylab("") +
+    ggtitle("Presumed u5 per 1000") +
+    scale_x_yearmon("Date", breaks = sort(unique(cases$Date))[c(seq(1,48,6), 48)],
+                    labels = sort(unique(cases$Date))[c(seq(1,48,6), 48)]) +
+    theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+                       panel.border = element_blank(), panel.grid.major = element_blank(),
+                       panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
+
+
+
+
+
 ##########################################################################################
 
 cases_no2015 <- cases[which(cases$year != 2015),]
@@ -173,7 +204,7 @@ cases_no2015 <- cases[which(cases$year != 2015),]
 
 
 ggplot(cases_no2015, aes(x = Date, y = (maltreat_u5 - conf_rdt_mic_u5) / (U5_pop/1000),
-                  group = as.factor(District))) +
+                         group = as.factor(District))) +
     geom_line(alpha = 0.25, size = 1, show.legend = FALSE, color = "blue") + ylab("") +
     ggtitle("'Unconfirmed' malaria cases u5 per 1000 (treated - confirmed)") +
     scale_x_yearmon("Date", breaks = sort(unique(cases$Date))[c(seq(1,48,6), 48)],
@@ -192,6 +223,7 @@ ggplot(cases_no2015, aes(x = (conf_rdt_mic_u5 / (U5_pop / 1000)),
     geom_point(alpha = 0.25, size = 1, show.legend = FALSE, color = "blue") +
     geom_abline(slope = 1, intercept = 0, lwd = 1) +
     ggtitle("") + theme_bw() +
+    xlab("Confirmed cases per 1000") + ylab("maltreat per 1000") +
     theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
           panel.border = element_blank(), panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
@@ -207,7 +239,7 @@ mean(cases_no2015$maltreat_u5 > cases_no2015$conf_rdt_mic_u5)
 
 
 ggplot(cases_no2015, aes(x = Date, y = (susp_u5 - test_rdt_mic_u5) / (U5_pop/1000),
-                  group = as.factor(District))) +
+                         group = as.factor(District))) +
     geom_line(alpha = 0.25, size = 1, show.legend = FALSE, color = "blue") + ylab("") +
     ggtitle("'Untested' malaria cases u5 per 1000 (suspected - tested)") +
     scale_x_yearmon("Date", breaks = sort(unique(cases$Date))[c(seq(1,48,6), 48)],
@@ -225,6 +257,7 @@ ggplot(cases_no2015, aes(x = (test_rdt_mic_u5 / (U5_pop / 1000)),
     geom_point(alpha = 0.25, size = 1, show.legend = FALSE, color = "blue") +
     geom_abline(slope = 1, intercept = 0, lwd = 1) +
     ggtitle("") + theme_bw() +
+    xlab("Tests (RDT or microscopy) per 1000") + ylab("Suspected per 1000") +
     theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
           panel.border = element_blank(), panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
@@ -238,6 +271,33 @@ mean(cases_no2015$susp_u5 > cases_no2015$test_rdt_mic_u5)
 ## How many have negative values of "unconfirmed" / "untested" malaria cases
 mean((cases_no2015$maltreat_u5 < cases_no2015$conf_rdt_mic_u5) &
          (cases_no2015$susp_u5 < cases_no2015$test_rdt_mic_u5))
+
+
+
+
+
+
+ggplot(cases_no2015, aes(x = Date, y =  test_rdt_mic_u5/ susp_u5,
+                         group = as.factor(District))) +
+    geom_line(alpha = 0.25, size = 1, show.legend = FALSE, color = "blue") + ylab("") +
+    ggtitle("") + ylim(c(0,1)) +
+    scale_x_yearmon("Date", breaks = sort(unique(cases$Date))[c(seq(1,48,6), 48)],
+                    labels = sort(unique(cases$Date))[c(seq(1,48,6), 48)]) +
+    theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+                       panel.border = element_blank(), panel.grid.major = element_blank(),
+                       panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
+
+
+ggplot(cases_no2015, aes(x = Date, y =  test_rdt_mic_u5/ allout_u5,
+                         group = as.factor(District))) +
+    geom_line(alpha = 0.25, size = 1, show.legend = FALSE, color = "blue") + ylab("") +
+    ggtitle("") +
+    scale_x_yearmon("Date", breaks = sort(unique(cases$Date))[c(seq(1,48,6), 48)],
+                    labels = sort(unique(cases$Date))[c(seq(1,48,6), 48)]) +
+    theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+                       panel.border = element_blank(), panel.grid.major = element_blank(),
+                       panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
+
 
 
 
