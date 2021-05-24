@@ -35,13 +35,17 @@ tmp_total_HF <- ddply(HF_cases, c(.(District), .(Date), .(month)), summarise,
 
 
 average_HF_counts_per_month <- ddply(HF_cases, c(.(District), .(UID), .(month)), summarise,
-                                     total_counts_HF = sum(conf_rdt_mic_u5, na.rm = T),
-                                     na_counts_HF = sum(is.na(conf_rdt_u5)))
+                                     na_counts_HF = sum(is.na(conf_rdt_u5)),
+                                     average_counts_HF = (sum(conf_rdt_mic_u5, na.rm = T)/(4 - sum(is.na(conf_rdt_u5)))))
 
-average_District_counts_per_month <- ddply(HF_cases, c(.(District), .(month)), summarise,
-                                           total_counts_D = sum(conf_rdt_mic_u5, na.rm = T),
-                                           na_counts_D = sum(is.na(conf_rdt_u5)))
+average_HF_counts_per_month[is.nan(average_HF_counts_per_month$average_counts_HF), "average_counts_HF"] <- 0
+average_HF_counts_per_month[is.infinite(average_HF_counts_per_month$average_counts_HF), "average_counts_HF"] <- 0
 
+
+average_District_counts_per_month <- ddply(average_HF_counts_per_month, c(.(District), .(month)), summarise,
+                                           sum_avg_counts_HF = sum(average_counts_HF))
+                                     
+                                           
 
 average_counts_per_month <- left_join(average_District_counts_per_month, average_HF_counts_per_month,
                                       by = c("District", "month"))
@@ -49,19 +53,19 @@ average_counts_per_month <- left_join(average_counts_per_month, tmp_total_HF,
                                       by = c("District", "month"))
 
 # average_counts_per_month <- average_counts_per_month[-which(average_counts_per_month$na_counts_HF == 4),]
-average_counts_per_month$weights <- average_counts_per_month$total_counts_HF/average_counts_per_month$total_counts_D
+average_counts_per_month$weights <- average_counts_per_month$average_counts_HF/average_counts_per_month$sum_avg_counts_HF
 
 
 
 
-# tmp_total_HF_weighted <- ddply(average_counts_per_month, c(.(District), .(Date), .(total_HF)), summarise,
-#                                total_HF_weighted = sum(weights))
+tmp_total_HF_weighted <- ddply(average_counts_per_month, c(.(District), .(Date)), summarise,
+                               total_HF_weighted = sum(weights))
 
 
 #################################################################################################################################
 
-HF_cases <- left_join(HF_cases, average_counts_per_month[,c("UID", "month", "weights")],
-                      by = c("UID", "month"))
+HF_cases <- left_join(HF_cases, average_counts_per_month[,c("UID", "Date", "weights")],
+                      by = c("UID", "Date"))
 
 #################################################################################################################################
 
@@ -85,14 +89,13 @@ HF_cases_good <- HF_cases_good[-c(bad_rows_age1, bad_rows_age2),]
 # 47507 removed
 
 
-tmp_reporting_HF_weighted <- ddply(HF_cases_good, c(.(District), .(Date)), summarise,
-                                   reporting_HF = length(unique(UID)),
-                                   reporting_HF_weighted = sum(weights))
+HF_reporting_weighted <- ddply(HF_cases_good, c(.(District), .(Date)), summarise,
+                               reporting_HF = length(unique(UID)),
+                               reporting_HF_weighted = sum(weights))
 
+HF_reporting_weighted <- left_join(HF_reporting_weighted, tmp_total_HF, by = c("District", "Date"))
 
-HF_reporting_weighted <- left_join(tmp_total_HF_weighted, tmp_reporting_HF_weighted, by = "District")
-
-HF_reporting_weighted$weighted_rep_rate <- HF_reporting_weighted$reporting_HF_weighted / HF_reporting_weighted$total_HF_weighted
+HF_reporting_weighted$weighted_rep_rate <- HF_reporting_weighted$reporting_HF_weighted
 HF_reporting_weighted$rep_rate <- HF_reporting_weighted$reporting_HF / HF_reporting_weighted$total_HF
 
 
@@ -133,7 +136,7 @@ D_cases <- left_join(D_cases, unique_rows,
 
 
 
-D_cases <- left_join(D_cases, HF_reporting_weighted, by = c("District", "Date"))
+D_cases <- left_join(D_cases, HF_reporting_weighted, by = c("District", "Date", "month"))
 
 
 

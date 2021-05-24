@@ -189,21 +189,26 @@ ggplot(cases, aes(x = Date, y = conf_rdt_mic_u5 / (U5_pop/1000),
 
 
 
-med_2014 <- read.csv("~/Box/NU-malaria-team/projects/hbhi_burkina/DS DHS estimates/medfever/med_BF14DS.csv", stringsAsFactors = FALSE)
-med_2017 <- read.csv("~/Box/NU-malaria-team/projects/hbhi_burkina/DS DHS estimates/medfever/med_BF17DS.csv", stringsAsFactors = FALSE)
+# med_2014 <- read.csv("~/Box/NU-malaria-team/projects/hbhi_burkina/DS DHS estimates/medfever/med_BF14DS.csv", stringsAsFactors = FALSE)
+# med_2017 <- read.csv("~/Box/NU-malaria-team/projects/hbhi_burkina/DS DHS estimates/medfever/med_BF17DS.csv", stringsAsFactors = FALSE)
+
+
+med_2014 <- read.csv("~/OneDrive/Desktop/medfever_region_2014.csv", stringsAsFactors = FALSE)
+med_2017 <- read.csv("~/OneDrive/Desktop/medfever_region_2017.csv", stringsAsFactors = FALSE)
 
 
 
-med_2014 <- med_2014[,-c(1,4)]
-names(med_2014)[2] <- "medfever_2014"
-med_2017 <- med_2017[,-c(1,4)]
-names(med_2017)[2] <- "medfever_2017"
+med_2014 <- med_2014[,-4]
+names(med_2014)[3] <- "medfever_2014"
+med_2017 <- med_2017[,-4]
+names(med_2017)[3] <- "medfever_2017"
 
-medfever_DHS <- inner_join(med_2014, med_2017, by = "NOMDEP")
-medfever_DHS <- cbind(medfever_DHS[,1:2], medfever_DHS[,2], medfever_DHS[,3], medfever_DHS[,3])
-names(medfever_DHS) <- c("District", "2015", "2016", "2017", "2018")
+medfever_DHS <- inner_join(med_2014, med_2017, by = c("NOMDEP", "NOMREGION"))
+medfever_DHS <- cbind(medfever_DHS[,1:3], medfever_DHS[,3], medfever_DHS[,4], medfever_DHS[,4])
+names(medfever_DHS) <- c("District", "Region", "2015", "2016", "2017", "2018")
 
-medfever_DHS <- melt(medfever_DHS, id.vars = "District", variable.name = "year", value.name = "medfever")
+medfever_DHS <- melt(medfever_DHS, id.vars = c("District", "Region"),
+                     variable.name = "year", value.name = "medfever_regional")
 
 
 
@@ -220,30 +225,29 @@ for (i in 1:nrow(district_map))
 
 medfever_DHS$year <- as.numeric(as.character(medfever_DHS$year))
 
-medfever_DHS <- left_join(medfever_DHS, unique(cases[,c("Region", "District", "year", "U5_pop")]), by = c("District", "year"))
+# medfever_DHS <- left_join(medfever_DHS[,-2], unique(cases[,c("Region", "District", "year", "U5_pop")]), by = c("District", "year"))
 
 
-medfever_region <- ddply(medfever_DHS[!is.na(medfever_DHS$medfever),], c(.(Region), .(year)),
-                         summarise, medfever = sum(medfever * U5_pop)/ sum(U5_pop))
+# medfever_region <- ddply(medfever_DHS[!is.na(medfever_DHS$medfever),], c(.(Region), .(year)),
+#                          summarise, medfever = sum(medfever * U5_pop)/ sum(U5_pop))
+# 
+# 
+# medfever_DHS_tmp_1 <- medfever_DHS[!is.na(medfever_DHS$medfever),]
+# medfever_DHS_tmp_2 <- medfever_DHS[is.na(medfever_DHS$medfever),]
+# 
+# medfever_DHS_tmp_2 <- left_join(medfever_DHS_tmp_2[,-3], medfever_region, by = c("year", "Region"))
+# medfever_DHS_tmp_2 <- medfever_DHS_tmp_2[, c(1:2, 5, 3:4)]
+# 
+# medfever_DHS <- rbind(medfever_DHS_tmp_1, medfever_DHS_tmp_2)
+
+# names(medfever_region)[3] <- "medfever_regional"
+# medfever_DHS <- left_join(medfever_DHS, medfever_region, by = c("year", "Region"))
 
 
-medfever_DHS_tmp_1 <- medfever_DHS[!is.na(medfever_DHS$medfever),]
-medfever_DHS_tmp_2 <- medfever_DHS[is.na(medfever_DHS$medfever),]
-
-medfever_DHS_tmp_2 <- left_join(medfever_DHS_tmp_2[,-3], medfever_region, by = c("year", "Region"))
-medfever_DHS_tmp_2 <- medfever_DHS_tmp_2[, c(1:2, 5, 3:4)]
-
-medfever_DHS <- rbind(medfever_DHS_tmp_1, medfever_DHS_tmp_2)
-
-names(medfever_region)[3] <- "medfever_regional"
-medfever_DHS <- left_join(medfever_DHS, medfever_region, by = c("year", "Region"))
-
-
-cases <- left_join(cases, medfever_DHS[,c(1:3, 6)], by = c("District", "year"))
+cases <- left_join(cases, medfever_DHS[,-2], by = c("District", "year"))
 
 for (D in unique(cases$District))
 {
-    cases[which(cases$District == D & cases$Date %in% as.yearmon(seq(as.Date("2016-05-01"), as.Date("2016-12-01"), by="months"))), "medfever"] <- cases[which(cases$District == D & cases$Date == "Jan 2017"), "medfever"]
     cases[which(cases$District == D & cases$Date %in% as.yearmon(seq(as.Date("2016-05-01"), as.Date("2016-12-01"), by="months"))), "medfever_regional"] <- cases[which(cases$District == D & cases$Date == "Jan 2017"), "medfever_regional"]
 }
 
