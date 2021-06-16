@@ -11,6 +11,8 @@ require("ggplot2")
 # Loading health facility dataset
 
 HF_cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_MA.csv", stringsAsFactors = FALSE)
+# HF_cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_testing_pres_MA.csv", stringsAsFactors = FALSE)
+
 
 HF_cases$Date <- as.Date(as.yearmon(HF_cases$Date))
 HF_cases <- HF_cases[order(HF_cases$UID, HF_cases$Date),]
@@ -75,5 +77,7 @@ ggplot(HF_cases_area_by_Region, aes(fill = Type, y = reports/total_HFs, x = Date
     scale_y_continuous(expand = c(0,0)) +
     facet_wrap(~Region) +
     theme(panel.spacing.x = unit(2, "mm"))
+
+
 
 

@@ -32,12 +32,44 @@ library("lubridate")
 
 # cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_DS_cases_seasonal_smc_good_rows_MA_imputes.csv", header  = TRUE, strip.white = TRUE, stringsAsFactors = FALSE)
 
-# cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_DS_cases_seasonal_smc_good_rows_MA_imputes_testing.csv", header  = TRUE, strip.white = TRUE, stringsAsFactors = FALSE)
+# cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_DS_cases_seasonal_smc_MA_imputes_pres_w_rep_weights_checking_OCT.csv", header  = TRUE, strip.white = TRUE, stringsAsFactors = FALSE)
+
 
 cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_DS_cases_seasonal_smc_good_rows_MA_imputes_testing_w_rep_weights.csv", header  = TRUE, strip.white = TRUE, stringsAsFactors = FALSE)
-
 cases$U5_pop <- cases$District.Pop * .18
 cases$Date <- as.yearmon(cases$Date)
+
+
+
+
+
+
+ggplot(cases[which(cases$year == 2016),], aes(x = Date, y =  conf_rdt_mic_u5 / (U5_pop/1000),
+                  group = as.factor(District))) +
+    geom_line(alpha = 0.25, size = 1, show.legend = FALSE, color = "blue") + ylab("Cases per 1000") +
+    ggtitle("Confirmed cases of malaria from RDT or Microscopy among children under 5") +
+    scale_x_yearmon("Date", breaks = sort(unique(cases$Date))[c(seq(1,48,6), 48)],
+                    labels = sort(unique(cases$Date))[c(seq(1,48,6), 48)]) +
+    theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+                       panel.border = element_blank(), panel.grid.major = element_blank(),
+                       panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
+
+
+
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+
+
+
+
 
 
 
@@ -48,20 +80,20 @@ ggplot(cases, aes(x = Date, y =  conf_rdt_mic_u5 / (U5_pop/1000),
     geom_line(alpha = 0.25, size = 1, show.legend = FALSE, color = "blue") + ylab("Cases per 1000") +
     ggtitle("Confirmed cases of malaria from RDT or Microscopy among children under 5") +
     scale_x_yearmon("Date", breaks = sort(unique(cases$Date))[c(seq(1,48,6), 48)],
-                     labels = sort(unique(cases$Date))[c(seq(1,48,6), 48)]) +
+                    labels = sort(unique(cases$Date))[c(seq(1,48,6), 48)]) +
     theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
                        panel.border = element_blank(), panel.grid.major = element_blank(),
                        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
 
 
-
+cases$prop <- cases$conf_rdt_mic_u5 / cases$allout_u5
 ## Figure 3b
-ggplot(cases, aes(x = Date, y = conf_rdt_mic_u5 / allout_u5,
+ggplot(cases, aes(x = Date, y = prop,
                   group = as.factor(District))) +
     geom_line(alpha = 0.25, size = 1, show.legend = FALSE, color = "blue") + ylab("") +
     ggtitle("Proportion of all-cause outpatient visits due to malaria in under-5 population") +
     scale_x_yearmon("Date", breaks = sort(unique(cases$Date))[c(seq(1,48,6), 48)],
-                     labels = sort(unique(cases$Date))[c(seq(1,48,6), 48)]) +
+                    labels = sort(unique(cases$Date))[c(seq(1,48,6), 48)]) +
     theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
                        panel.border = element_blank(), panel.grid.major = element_blank(),
                        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
@@ -89,7 +121,7 @@ ggplot(cases, aes(x = Date, y =  conf_rdt_mic_u5 / test_rdt_mic_u5,
                        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
 
 
- 
+
 # 
 # ggplot(cases, aes(x = Date, y =  conf_rdt_mic_u5 / test_rdt_mic_u5,
 #                   group = as.factor(District))) +
@@ -331,6 +363,22 @@ ggplot(cases, aes(x = (allout_u5 / (U5_pop / 1000)),
           panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
 
 
+
+
+
+
+
+
+ggplot(cases_no2015, aes(x = Date, y = (allout_u5 - susp_u5) / (U5_pop/1000),
+                         group = as.factor(District))) +
+    geom_line(alpha = 0.25, size = 1, show.legend = FALSE, color = "blue") + ylab("") +
+    ggtitle("(susp - allout) per 1000") +
+    geom_hline(yintercept = 0) +
+    scale_x_yearmon("Date", breaks = sort(unique(cases$Date))[c(seq(1,48,6), 48)],
+                    labels = sort(unique(cases$Date))[c(seq(1,48,6), 48)]) +
+    theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+                       panel.border = element_blank(), panel.grid.major = element_blank(),
+                       panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
 
 
 

@@ -33,7 +33,7 @@ cases_no2015[untested_ind, "presumed_u5"] <- cases_no2015[untested_ind, "susp_u5
 cases_no2015[unconfirmed_ind, "presumed_u5"] <- cases_no2015[unconfirmed_ind, "maltreat_u5"] - cases_no2015[unconfirmed_ind, "conf_rdt_mic_u5"]
 
 
-sum(is.na(cases_no2015$presumed_u5))
+mean(is.na(cases_no2015$presumed_u5))
 
 
 
@@ -80,10 +80,6 @@ ggplot(cases_no2015, aes(x = Date, y = N2_weighted_adj / (U5_pop/1000),
 
 
 #############################################################################################################
-
-
-
-
 
 
 
@@ -149,7 +145,8 @@ ggplot(cases, aes(x = Date, y = weighted_rep_rate,
 
 
 
-
+plot(cases$weighted_rep_rate, cases$rep_rate)
+abline(c(0, 1))
 
 
 
@@ -246,16 +243,16 @@ medfever_DHS$year <- as.numeric(as.character(medfever_DHS$year))
 
 cases <- left_join(cases, medfever_DHS[,-2], by = c("District", "year"))
 
-for (D in unique(cases$District))
-{
-    cases[which(cases$District == D & cases$Date %in% as.yearmon(seq(as.Date("2016-05-01"), as.Date("2016-12-01"), by="months"))), "medfever_regional"] <- cases[which(cases$District == D & cases$Date == "Jan 2017"), "medfever_regional"]
-}
+# for (D in unique(cases$District))
+# {
+#     cases[which(cases$District == D & cases$Date %in% as.yearmon(seq(as.Date("2016-05-01"), as.Date("2016-12-01"), by="months"))), "medfever_regional"] <- cases[which(cases$District == D & cases$Date == "Jan 2017"), "medfever_regional"]
+# }
 
 
 
 # cases$cases_trtseeking_adj <- cases$conf_rdt_mic_u5 + (cases$conf_rdt_mic_u5 * (1 - cases$medfever))
-cases$cases_trtseeking_adj <- cases$conf_rdt_mic_u5 + (cases$conf_rdt_mic_u5 * (1 - cases$medfever_regional))
-
+# cases$cases_trtseeking_adj <- cases$conf_rdt_mic_u5 + (cases$conf_rdt_mic_u5 * (1 - cases$medfever_regional))
+cases$cases_trtseeking_adj <- cases$conf_rdt_mic_u5 / cases$medfever_regional
 
 
 ggplot(cases, aes(x = Date, y = cases_trtseeking_adj / (U5_pop/1000),
@@ -273,7 +270,84 @@ ggplot(cases, aes(x = Date, y = cases_trtseeking_adj / (U5_pop/1000),
 
 
 
+#############################################################################################################
 
+
+med_2014 <- read.csv("~/OneDrive/Desktop/medfever_region_2014.csv", stringsAsFactors = FALSE)
+med_2017 <- read.csv("~/OneDrive/Desktop/medfever_region_2017.csv", stringsAsFactors = FALSE)
+
+
+
+med_2014 <- med_2014[,-4]
+names(med_2014)[3] <- "medfever_2014"
+med_2017 <- med_2017[,-4]
+names(med_2017)[3] <- "medfever_2017"
+
+medfever_DHS <- inner_join(med_2014, med_2017, by = c("NOMDEP", "NOMREGION"))
+medfever_DHS <- cbind(medfever_DHS[,1:3], medfever_DHS[,4])
+names(medfever_DHS) <- c("District", "Region", "Aug 2014", "Dec 2017")
+
+medfever_DHS <- melt(medfever_DHS, id.vars = c("District", "Region"),
+                     variable.name = "Date", value.name = "medfever_regional")
+
+
+
+district_map <- cbind(sort(unique(cases$District)),
+                      sort(unique(medfever_DHS$District))[c(1:40,42,41,43:70)])
+
+for (i in 1:nrow(district_map))
+{
+    DS <- district_map[i, 2]
+    new_name_DS <- district_map[i, 1]
+    
+    medfever_DHS[which(medfever_DHS$District == DS), "District"] <- new_name_DS
+}
+
+medfever_DHS$Date <- as.yearmon(medfever_DHS$Date)
+medfever_DHS <- medfever_DHS[order(medfever_DHS$District, medfever_DHS$Date),]
+
+
+
+medfever_DHS <- as.data.frame(medfever_DHS)
+
+dates <- seq(as.Date("2014-08-01"), as.Date("2018-12-01"), by="months")
+medfever_DHS_fitted <- data.frame()
+
+for (D in unique(cases$District))
+{
+    D_data <- medfever_DHS[medfever_DHS$District == D,]
+    D_data$ind <- c(1, 41)
+    
+    D_lm <- lm(medfever_regional ~ ind, data = D_data)
+    D_fitted <- predict(D_lm, data.frame("ind" = c(1:53)))
+    
+    medfever_DHS_fitted_D <- data.frame("District" = rep(D, 53),
+                                        "Date" = dates,
+                                        "fitted_regional_medfever" = D_fitted)
+    medfever_DHS_fitted <- rbind(medfever_DHS_fitted, medfever_DHS_fitted_D)
+}
+medfever_DHS_fitted$Date <- as.yearmon(medfever_DHS_fitted$Date)
+
+
+
+cases <- left_join(cases, medfever_DHS_fitted, by = c("District", "Date"))
+
+
+
+cases$cases_trtseeking_adj <- cases$conf_rdt_mic_u5 / cases$fitted_regional_medfever
+
+
+
+
+ggplot(cases, aes(x = Date, y = cases_trtseeking_adj / (U5_pop/1000),
+                  group = as.factor(District))) +
+    geom_line(alpha = 0.25, size = 1, show.legend = FALSE, color = "blue") + ylab("Cases per 1000") +
+    ggtitle("Treatment seeking adjusted (linear fit) malaria cases among u5") +
+    scale_x_yearmon("Date", breaks = sort(unique(cases$Date))[c(seq(1,48,6), 48)],
+                    labels = sort(unique(cases$Date))[c(seq(1,48,6), 48)]) +
+    theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+                       panel.border = element_blank(), panel.grid.major = element_blank(),
+                       panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
 
 
 #############################################################################################################
@@ -283,7 +357,7 @@ ggplot(cases, aes(x = Date, y = cases_trtseeking_adj / (U5_pop/1000),
 
 
 
-cases$cases_reporting_trtseeking_adj <- cases$cases_rep_adj + (cases$cases_rep_adj * (1 - cases$medfever_regional))
+cases$cases_reporting_trtseeking_adj <- cases$cases_rep_adj / cases$medfever_regional
 
 
 
@@ -331,7 +405,7 @@ ggplot(cases_no2015, aes(x = Date, y = N3_adj / (U5_pop/1000),
 
 
 
-cases$cases_weighted_reporting_trtseeking_adj <- cases$cases_rep_weighted_adj + (cases$cases_rep_weighted_adj * (1 - cases$medfever_regional))
+cases$cases_weighted_reporting_trtseeking_adj <- cases$cases_rep_weighted_adj / cases$medfever_regional
 
 
 
@@ -353,7 +427,7 @@ ggplot(cases, aes(x = Date, y = cases_weighted_reporting_trtseeking_adj / (U5_po
 
 
 cases_no2015 <- left_join(cases_no2015, medfever_DHS[,c(1:3, 6)], by = c("District", "year"))
-cases_no2015$N3_adj <- cases_no2015$N2_adj + (cases_no2015$N2_adj * (1 - cases_no2015$medfever_regional))
+cases_no2015$N3_adj <- cases_no2015$N2_adj / cases_no2015$medfever_regional
 
 
 ggplot(cases_no2015, aes(x = Date, y = N3_adj / (U5_pop/1000),

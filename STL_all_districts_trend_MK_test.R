@@ -27,8 +27,15 @@ require("lubridate")
 
 
 require("stlplus")
-require("maditr")
+require("reshape2")
+require("trend")
 
+
+require("RColorBrewer")
+require("spdep")
+require("rgdal")
+require("sf")
+require("rgeos")
 
 
 
@@ -48,7 +55,7 @@ getNormalized <- function(vec)
 # Loading health district dataset
 # Creating under-5 population column and fixing date column
 
-# cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_DS_cases_seasonal_smc_good_rows_MA_imputes_testing.csv", header  = TRUE, strip.white = TRUE, stringsAsFactors = FALSE)
+# cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_DS_cases_seasonal_smc_good_rows_MA_imputes.csv", header  = TRUE, strip.white = TRUE, stringsAsFactors = FALSE)
 cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_DS_cases_seasonal_smc_good_rows_MA_imputes_testing_w_rep_weights.csv", header  = TRUE, strip.white = TRUE, stringsAsFactors = FALSE)
 cases$U5_pop <- cases$District.Pop * .18
 cases$Date <- as.yearmon(cases$Date)
@@ -79,9 +86,15 @@ names(SMC.init)[2] <- "SMC.init_date"
 cases <- inner_join(cases, SMC.init, by = "District")
 
 
-#########################################################################3
+
+
+################################################################################
+
+
+
 
 cases <- cases[order(cases$District, cases$Date),]
+
 
 cases$mal_cases <- cases$conf_rdt_mic_u5 / (cases$U5_pop/1000)
 cases$all_cases <- cases$allout_u5 / (cases$U5_pop/1000)
@@ -91,65 +104,75 @@ cases$mal_ratio <- cases$conf_rdt_mic_u5 / cases$allout_u5
 
 
 
-# med_2014 <- read.csv("~/Box/NU-malaria-team/projects/hbhi_burkina/DS DHS estimates/medfever/med_BF14DS.csv", stringsAsFactors = FALSE)
-# med_2017 <- read.csv("~/Box/NU-malaria-team/projects/hbhi_burkina/DS DHS estimates/medfever/med_BF17DS.csv", stringsAsFactors = FALSE)
-# 
-# 
-# 
-# med_2014 <- med_2014[,-c(1,4)]
-# names(med_2014)[2] <- "medfever_2014"
-# med_2017 <- med_2017[,-c(1,4)]
-# names(med_2017)[2] <- "medfever_2017"
-# 
-# medfever_DHS <- inner_join(med_2014, med_2017, by = "NOMDEP")
-# medfever_DHS <- cbind(medfever_DHS[,1:2], medfever_DHS[,2], medfever_DHS[,3], medfever_DHS[,3])
-# names(medfever_DHS) <- c("District", "2015", "2016", "2017", "2018")
-# 
-# medfever_DHS <- melt(medfever_DHS, id.vars = "District", variable.name = "year", value.name = "medfever")
-# 
-# 
-# 
-# district_map <- cbind(sort(unique(cases$District)),
-#                       sort(unique(medfever_DHS$District))[c(1:40,42,41,43:70)])
-# 
-# for (i in 1:nrow(district_map))
-# {
-#     DS <- district_map[i, 2]
-#     new_name_DS <- district_map[i, 1]
-#     
-#     medfever_DHS[which(medfever_DHS$District == DS), "District"] <- new_name_DS
-# }
-# 
-# medfever_DHS$year <- as.numeric(as.character(medfever_DHS$year))
-# 
-# medfever_DHS <- left_join(medfever_DHS, unique(cases[,c("Region", "District", "year", "U5_pop")]), by = c("District", "year"))
-# 
-# 
-# medfever_region <- ddply(medfever_DHS[!is.na(medfever_DHS$medfever),], c(.(Region), .(year)),
-#                          summarise, medfever = sum(medfever * U5_pop)/ sum(U5_pop))
-# 
-# 
-# medfever_DHS_tmp_1 <- medfever_DHS[!is.na(medfever_DHS$medfever),]
-# medfever_DHS_tmp_2 <- medfever_DHS[is.na(medfever_DHS$medfever),]
-# 
-# medfever_DHS_tmp_2 <- left_join(medfever_DHS_tmp_2[,-3], medfever_region, by = c("year", "Region"))
-# medfever_DHS_tmp_2 <- medfever_DHS_tmp_2[, c(1:2, 5, 3:4)]
-# 
-# medfever_DHS <- rbind(medfever_DHS_tmp_1, medfever_DHS_tmp_2)
-# 
-# names(medfever_region)[3] <- "medfever_regional"
-# medfever_DHS <- left_join(medfever_DHS, medfever_region, by = c("year", "Region"))
-# 
-# 
-# cases <- left_join(cases, medfever_DHS[,c(1:3, 6)], by = c("District", "year"))
-# 
-# for (D in unique(cases$District))
-# {
-#     cases[which(cases$District == D & cases$Date %in% as.yearmon(seq(as.Date("2016-05-01"), as.Date("2016-12-01"), by="months"))), "medfever"] <- cases[which(cases$District == D & cases$Date == "Jan 2017"), "medfever"]
-#     cases[which(cases$District == D & cases$Date %in% as.yearmon(seq(as.Date("2016-05-01"), as.Date("2016-12-01"), by="months"))), "medfever_regional"] <- cases[which(cases$District == D & cases$Date == "Jan 2017"), "medfever_regional"]
-# }
+
+################################################################################
 
 
+med_2014 <- read.csv("~/OneDrive/Desktop/medfever_region_2014.csv", stringsAsFactors = FALSE)
+med_2017 <- read.csv("~/OneDrive/Desktop/medfever_region_2017.csv", stringsAsFactors = FALSE)
+
+
+
+med_2014 <- med_2014[,-4]
+names(med_2014)[3] <- "medfever_2014"
+med_2017 <- med_2017[,-4]
+names(med_2017)[3] <- "medfever_2017"
+
+medfever_DHS <- inner_join(med_2014, med_2017, by = c("NOMDEP", "NOMREGION"))
+medfever_DHS <- cbind(medfever_DHS[,1:3], medfever_DHS[,4])
+names(medfever_DHS) <- c("District", "Region", "Aug 2014", "Dec 2017")
+
+medfever_DHS <- melt(medfever_DHS, id.vars = c("District", "Region"),
+                     variable.name = "Date", value.name = "medfever_regional")
+
+
+
+district_map <- cbind(sort(unique(cases$District)),
+                      sort(unique(medfever_DHS$District))[c(1:40,42,41,43:70)])
+
+for (i in 1:nrow(district_map))
+{
+    DS <- district_map[i, 2]
+    new_name_DS <- district_map[i, 1]
+    
+    medfever_DHS[which(medfever_DHS$District == DS), "District"] <- new_name_DS
+}
+
+medfever_DHS$Date <- as.yearmon(medfever_DHS$Date)
+medfever_DHS <- medfever_DHS[order(medfever_DHS$District, medfever_DHS$Date),]
+
+
+
+medfever_DHS <- as.data.frame(medfever_DHS)
+
+dates <- seq(as.Date("2014-08-01"), as.Date("2018-12-01"), by="months")
+medfever_DHS_fitted <- data.frame()
+
+for (D in unique(cases$District))
+{
+    D_data <- medfever_DHS[medfever_DHS$District == D,]
+    D_data$ind <- c(1, 41)
+    
+    D_lm <- lm(medfever_regional ~ ind, data = D_data)
+    D_fitted <- predict(D_lm, data.frame("ind" = c(1:53)))
+    
+    medfever_DHS_fitted_D <- data.frame("District" = rep(D, 53),
+                                        "Date" = dates,
+                                        "fitted_regional_medfever" = D_fitted)
+    medfever_DHS_fitted <- rbind(medfever_DHS_fitted, medfever_DHS_fitted_D)
+}
+medfever_DHS_fitted$Date <- as.yearmon(medfever_DHS_fitted$Date)
+
+
+
+cases <- left_join(cases, medfever_DHS_fitted, by = c("District", "Date"))
+
+cases$cases_linear_trtseeking_adj <- (cases$mal_cases / cases$fitted_regional_medfever) / cases$weighted_rep_rate
+
+
+
+
+################################################################################
 
 
 
@@ -223,28 +246,6 @@ cases$all_nonMal_cases_rep_weighted_adj <- cases$all_nonMal_cases / cases$weight
 
 
 
-ggplot(cases, aes(x = Date, y = medfever_regional,
-                  group = as.factor(Region))) +
-    geom_line(aes(col = as.factor(Region)), size = 1, show.legend = FALSE) + ylab("") +
-    ggtitle("Step-function of Regional treatment seeking rates") +
-    scale_x_yearmon("Date", breaks = sort(unique(cases$Date))[c(seq(1,48,6), 48)],
-                    labels = sort(unique(cases$Date))[c(seq(1,48,6), 48)]) +
-    theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
-                       panel.border = element_blank(), panel.grid.major = element_blank(),
-                       panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
-
-
-
-
-
-
-
-
-
-
-
-
-#########################################################################3
 
 
 
@@ -271,7 +272,7 @@ trt_adj_pouytenga_Dec_2017 <- mean(c(cases$cases_trtseeking_adj[pouytenga_ind_No
 rep_adj_pouytenga_Dec_2017 <- mean(c(cases$cases_rep_adj[pouytenga_ind_Nov_2017],
                                      cases$cases_rep_adj[pouytenga_ind_Jan_2018]))
 weight_rep_adj_pouytenga_Dec_2017 <- mean(c(cases$cases_rep_weighted_adj[pouytenga_ind_Nov_2017],
-                                     cases$cases_rep_weighted_adj[pouytenga_ind_Jan_2018]))
+                                            cases$cases_rep_weighted_adj[pouytenga_ind_Jan_2018]))
 both_adj_pouytenga_Dec_2017 <- mean(c(cases$cases_both_adj[pouytenga_ind_Nov_2017],
                                       cases$cases_both_adj[pouytenga_ind_Jan_2018]))
 
@@ -305,9 +306,6 @@ cases <- rbind(cases[1:pouytenga_ind_Nov_2017,],
 
 
 
-
-
-
 # Pre-allocating data.frame for STL results
 
 STL_result_DF_norm <- data.frame()
@@ -324,10 +322,8 @@ for (DS in sort(unique(cases$District)))
     
     
     
-    
     # Create crude incidence variable
     # Standardize it, make it a timeseries object, and decompose it
-    
     mal_cases_norm <- getNormalized(cases_dist$mal_cases)
     mal_cases_norm_ts <- ts(mal_cases_norm, start = c(2015, 1), deltat = 1/12)
     cases_stl <- stlplus(mal_cases_norm_ts, s.window="periodic")
@@ -356,7 +352,7 @@ for (DS in sort(unique(cases$District)))
     rep_adj_norm <- getNormalized(cases_dist$cases_rep_adj)
     rep_adj_norm_ts <- ts(rep_adj_norm, start = c(2015, 1), deltat = 1/12)
     rep_adj_stl <- stlplus(rep_adj_norm_ts, s.window="periodic")
-
+    
     
     rep_weighted_adj_norm <- getNormalized(cases_dist$cases_rep_weighted_adj)
     rep_weighted_adj_norm_ts <- ts(rep_weighted_adj_norm, start = c(2015, 1), deltat = 1/12)
@@ -387,60 +383,80 @@ for (DS in sort(unique(cases$District)))
     cases_stl_ts$type <- rep("cases", nrow(cases_stl_ts))
     cases_stl_ts$lty <- rep("solid", nrow(cases_stl_ts))
     cases_stl_ts$dates <- dates
+    cases_stl_ts$MK_p <- smk.test(mal_cases_norm_ts)$p.value
+    cases_stl_ts$sens_slope <- sea.sens.slope(mal_cases_norm_ts)
     
     
     all_cases_stl_ts <- as.data.frame(all_cases_stl$data[,1:4]) 
     all_cases_stl_ts$type <- rep("allout", nrow(all_cases_stl_ts))
     all_cases_stl_ts$lty <- rep("solid", nrow(all_cases_stl_ts))
     all_cases_stl_ts$dates <- dates
+    all_cases_stl_ts$MK_p <- smk.test(all_cases_norm_ts)$p.value
+    all_cases_stl_ts$sens_slope <- sea.sens.slope(all_cases_norm_ts)
     
     
     all_nonMal_cases_stl_ts <- as.data.frame(all_nonMal_cases_stl$data[,1:4]) 
     all_nonMal_cases_stl_ts$type <- rep("all_nonMal", nrow(all_nonMal_cases_stl_ts))
     all_nonMal_cases_stl_ts$lty <- rep("solid", nrow(all_nonMal_cases_stl_ts))
     all_nonMal_cases_stl_ts$dates <- dates
+    all_nonMal_cases_stl_ts$MK_p <- smk.test(all_nonMal_cases_norm_ts)$p.value
+    all_nonMal_cases_stl_ts$sens_slope <- sea.sens.slope(all_nonMal_cases_norm_ts)
     
     
     ratio_stl_ts <- as.data.frame(ratio_stl$data[,1:4]) 
     ratio_stl_ts$type <- rep("ratio", nrow(ratio_stl_ts))
     ratio_stl_ts$lty <- rep("longdash", nrow(ratio_stl_ts))
     ratio_stl_ts$dates <- dates
+    ratio_stl_ts$MK_p <- smk.test(mal_ratio_norm_ts)$p.value
+    ratio_stl_ts$sens_slope <- sea.sens.slope(mal_ratio_norm_ts)
     
     
     trt_adj_stl_ts <- as.data.frame(trt_adj_stl$data[,1:4]) 
     trt_adj_stl_ts$type <- rep("trt_adj", nrow(trt_adj_stl_ts))
     trt_adj_stl_ts$lty <- rep("longdash", nrow(trt_adj_stl_ts))
     trt_adj_stl_ts$dates <- dates
+    trt_adj_stl_ts$MK_p <- smk.test(trt_adj_norm_ts)$p.value
+    trt_adj_stl_ts$sens_slope <- sea.sens.slope(trt_adj_norm_ts)
     
     
     rep_adj_stl_ts <- as.data.frame(rep_adj_stl$data[,1:4]) 
     rep_adj_stl_ts$type <- rep("rep_adj", nrow(rep_adj_stl_ts))
     rep_adj_stl_ts$lty <- rep("longdash", nrow(rep_adj_stl_ts))
     rep_adj_stl_ts$dates <- dates
+    rep_adj_stl_ts$MK_p <- smk.test(rep_adj_norm_ts)$p.value
+    rep_adj_stl_ts$sens_slope <- sea.sens.slope(rep_adj_norm_ts)
     
     
     rep_weighted_adj_stl_ts <- as.data.frame(rep_weighted_adj_stl$data[,1:4]) 
     rep_weighted_adj_stl_ts$type <- rep("rep_weighted_adj", nrow(rep_weighted_adj_stl_ts))
     rep_weighted_adj_stl_ts$lty <- rep("longdash", nrow(rep_weighted_adj_stl_ts))
     rep_weighted_adj_stl_ts$dates <- dates
+    rep_weighted_adj_stl_ts$MK_p <- smk.test(rep_weighted_adj_norm_ts)$p.value
+    rep_weighted_adj_stl_ts$sens_slope <- sea.sens.slope(rep_weighted_adj_norm_ts)
     
     
     both_adj_stl_ts <- as.data.frame(both_adj_stl$data[,1:4]) 
     both_adj_stl_ts$type <- rep("both_adj", nrow(both_adj_stl_ts))
     both_adj_stl_ts$lty <- rep("longdash", nrow(both_adj_stl_ts))
     both_adj_stl_ts$dates <- dates
+    both_adj_stl_ts$MK_p <- smk.test(both_adj_norm_ts)$p.value
+    both_adj_stl_ts$sens_slope <- sea.sens.slope(both_adj_norm_ts)
     
     
     all_cases_rep_weighted_adj_stl_ts <- as.data.frame(all_cases_rep_weighted_adj_stl$data[,1:4]) 
     all_cases_rep_weighted_adj_stl_ts$type <- rep("allout_rep_weighted_adj", nrow(all_cases_rep_weighted_adj_stl_ts))
     all_cases_rep_weighted_adj_stl_ts$lty <- rep("longdash", nrow(all_cases_rep_weighted_adj_stl_ts))
     all_cases_rep_weighted_adj_stl_ts$dates <- dates
+    all_cases_rep_weighted_adj_stl_ts$MK_p <- smk.test(all_cases_rep_weighted_adj_norm_ts)$p.value
+    all_cases_rep_weighted_adj_stl_ts$sens_slope <- sea.sens.slope(all_cases_rep_weighted_adj_norm_ts)
     
     
     all_nonMal_rep_weighted_adj_stl_ts <- as.data.frame(all_nonMal_rep_weighted_adj_stl$data[,1:4]) 
     all_nonMal_rep_weighted_adj_stl_ts$type <- rep("all_nonMal_rep_weighted_adj", nrow(all_nonMal_rep_weighted_adj_stl_ts))
     all_nonMal_rep_weighted_adj_stl_ts$lty <- rep("longdash", nrow(all_nonMal_rep_weighted_adj_stl_ts))
     all_nonMal_rep_weighted_adj_stl_ts$dates <- dates
+    all_nonMal_rep_weighted_adj_stl_ts$MK_p <- smk.test(all_nonMal_rep_weighted_adj_norm_ts)$p.value
+    all_nonMal_rep_weighted_adj_stl_ts$sens_slope <- sea.sens.slope(all_nonMal_rep_weighted_adj_norm_ts)
     
     
     
@@ -467,16 +483,14 @@ for (DS in sort(unique(cases$District)))
     STL_result_DF_DS_norm <- left_join(STL_result_DF_DS_norm, SMC_DF_DS,
                                        by = c("dates" = "Date"))
     
-    
-    
     # Appending to District data-frame to master data-frame and continuing
     
     STL_result_DF_norm <- rbind(STL_result_DF_norm, STL_result_DF_DS_norm)
 }
 
 # Adding SMC rollout group info for each district
-STL_result_DF_norm <- left_join(STL_result_DF_norm, unique(cases[,c("District", "Region", "SMC.init_date")]), by = "District")
-STL_result_DF_norm$SMC_rollout_group <- year(STL_result_DF_norm$SMC.init_date)
+STL_result_DF_norm <- left_join(STL_result_DF_norm, unique(cases[,c("District", "Region")]),
+                                by = "District")
 
 # Ordering by rollout group and then by district
 STL_result_DF_norm <- STL_result_DF_norm[order(STL_result_DF_norm$Region, STL_result_DF_norm$District),]
@@ -488,188 +502,63 @@ STL_result_DF_norm$District <- factor(STL_result_DF_norm$District, levels = sort
 
 
 
-#######################################################################################
-
-
-# Create plots for original data and the 3 extracted components from the decomposition
-# We plot both malaria variables on the same plot for ease of visualization
-# Make 4x4 grid (4 districts) spanning all 70 districts
 
 
 
-for (i in seq(1,70,8))
+################################################################################
+
+# STL_result_DF_norm_cases <- unique(STL_result_DF_norm[which(STL_result_DF_norm$type == "cases"), c("District", "Region", "MK_p", "sens_slope")])
+# names(STL_result_DF_norm_cases)[3:4] <- c("MK_p_cases", "sens_slope_cases")
+# 
+# sum(STL_result_DF_norm_cases$MK_p_cases > .05)
+# 
+# 
+# 
+# STL_result_DF_norm_ratio <- unique(STL_result_DF_norm[which(STL_result_DF_norm$type == "ratio"), c("District", "Region", "MK_p", "sens_slope")])
+# names(STL_result_DF_norm_ratio)[3:4] <- c("MK_p_ratio", "sens_slope_ratio")
+# 
+# sum(STL_result_DF_norm_ratio$MK_p_ratio > .05)
+# 
+# STL_result_DF_slopes <- full_join(STL_result_DF_norm_cases, STL_result_DF_norm_ratio, by = c("District", "Region"))
+
+
+
+STL_result_DF_slopes <- unique(STL_result_DF_norm[,c(5,8:10,12)])
+
+
+
+
+
+
+
+burkina_shape <- readOGR("~/Box/NU-malaria-team/data/burkina_shapefiles/Burkina Faso Health Districts SHP (130715)/BFA.shp")
+burkina_shape_DF <- fortify(burkina_shape, region = "District")
+
+
+district_list <- cbind(sort(levels(STL_result_DF_slopes$District)), sort(unique(burkina_shape_DF$id)))
+setDistrict <- function(Row)
 {
-    # Select 4 district for plotting
-    # Dont want alphabetical but my SMC rollout group THEN alphabetical from there
+    district <- district_list[which(district_list[,1] == Row[4]), 2]
     
-
-    DS_list <- unique(STL_result_DF_norm$District)[i:(i+7)]
-    
-    plotting_DF <- STL_result_DF_norm[which(STL_result_DF_norm$District %in% DS_list),]
-    # plotting_DF$facet_name <- paste(plotting_DF$District, plotting_DF$SMC_rollout_group, sep = " ")
-    # plotting_DF$facet_name <- factor(plotting_DF$facet_name, levels = unique(plotting_DF$facet_name))
-   
-    
-    plot_trend_1 <- ggplot(plotting_DF[which(plotting_DF$type %in% c("cases", "trt_adj", "rep_adj", "rep_weighted_adj", "both_adj")),],
-                           aes(x = dates, y = trend)) +
-        geom_line(aes(group = type, linetype = "solid",
-                  color = factor(type, levels = c("cases", "trt_adj", "rep_adj", "rep_weighted_adj", "both_adj")))) +
-        scale_color_manual("", values = c("#913058", "#F6851F", "#00A08A", "#8971B3", "#D61B5A")) + scale_linetype_identity("") + 
-        xlab("") + facet_wrap(~District, ncol = 4) +
-        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-              panel.background = element_blank(), axis.line = element_line(colour = "black"),
-              panel.spacing.x = unit(6, "mm"))
-    
-
-    plot_trend_2 <- ggplot(plotting_DF[which(plotting_DF$type %in% c("allout", "all_nonMal", "ratio", "both_adj")),],
-                           aes(x = dates, y = trend)) +
-        geom_line(aes(group = type, linetype = "solid",
-                  color = factor(type, levels = c("allout", "all_nonMal", "ratio", "both_adj")))) +
-        scale_color_manual("", values = c("#5393C3", "#F1A31F", "#98B548", "#D61B5A")) + scale_linetype_identity("") + 
-        xlab("") + facet_wrap(~District, ncol = 4) +
-        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-              panel.background = element_blank(), axis.line = element_line(colour = "black"),
-              panel.spacing.x = unit(6, "mm"))
-    
-    
-    plot_trend_3 <- ggplot(plotting_DF[which(plotting_DF$type %in% c("allout", "allout_rep_weighted_adj",
-                                                                     "all_nonMal", "all_nonMal_rep_weighted_adj")),],
-                           aes(x = dates, y = trend)) +
-        geom_line(aes(group = type, linetype = "solid",
-                      color = factor(type, levels = c("allout", "allout_rep_weighted_adj",
-                                                      "all_nonMal", "all_nonMal_rep_weighted_adj")))) +
-        scale_color_manual("", values = c("#5393C3", "#F1A31F", "#98B548", "#D61B5A")) + scale_linetype_identity("") + 
-        xlab("") + facet_wrap(~District, ncol = 4) +
-        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-              panel.background = element_blank(), axis.line = element_line(colour = "black"),
-              panel.spacing.x = unit(6, "mm"))
-    
-    
-    
-    
-    # Saving SI plots
-    pdf(paste("~/OneDrive/Desktop/SI_figures_cleaned_for_Bea/all_7/SI_decomp_", i, ".pdf", sep = ""))
-    grid.arrange(plot_trend_1, plot_trend_2, nrow = 2)
-    dev.off()
-    
-    pdf(paste("~/OneDrive/Desktop/SI_figures_cleaned_for_Bea/all_7/SI_decomp_other_vars_", i, ".pdf", sep = ""), width = 11, height = 7)
-    print(plot_trend_3)
-    dev.off()
-    
+    return(district)
 }
+STL_result_DF_slopes$id <- apply(STL_result_DF_slopes, 1, setDistrict)
+
+
+STL_result_DF_slopes$plotting_sens_slope <- STL_result_DF_slopes$sens_slope
+STL_result_DF_slopes[which(STL_result_DF_slopes$MK_p > .05), "plotting_sens_slope"] <- NA
+
+
+burkina_shape_DF_sens <- inner_join(burkina_shape_DF, STL_result_DF_slopes, by = "id")
 
 
 
+colr <- brewer.pal(9, "RdYlBu")
 
-for (i in seq(1,70,8))
-{
-    # Select 4 district for plotting
-    # Dont want alphabetical but my SMC rollout group THEN alphabetical from there
-    
-    
-    DS_list <- unique(STL_result_DF_norm$District)[i:(i+7)]
-    
-    plotting_DF <- STL_result_DF_norm[which(STL_result_DF_norm$District %in% DS_list),]
-
-    
-    plot_trend <- ggplot(plotting_DF[which(plotting_DF$type %in% c("cases", "both_adj", "ratio")),],
-                           aes(x = dates, y = trend)) +
-        geom_line(aes(group = type, linetype = "solid",
-                      color = factor(type, levels = c("cases", "both_adj", "ratio")))) +
-        scale_color_manual("", values = c("#913058", "#D61B5A", "#98B548")) + scale_linetype_identity("") + 
-        xlab("") + facet_wrap(~District, ncol = 4) +
-        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-              panel.background = element_blank(), axis.line = element_line(colour = "black"),
-              panel.spacing.x = unit(6, "mm"), panel.spacing.y = unit(4, "mm"))
-
-    
-    
-    
-    
-    
-    # Saving SI plots
-    pdf(paste("~/OneDrive/Desktop/SI_figures_cleaned_for_Bea/all_7_v2/SI_decomp_", i, ".pdf", sep = ""), width = 11, height = 7)
-    print(plot_trend)
-    dev.off()
-    
-}
-
-
-
-
-
-plot1 <- ggplot(STL_result_DF_norm[which(STL_result_DF_norm$District %in% c("tougouri", "koudougou", "lena", "gaoua") &
-                                    STL_result_DF_norm$type %in% c("cases", "trt_adj", "rep_adj", "rep_weighted_adj", "both_adj")),],
-       aes(x = dates, y = trend)) +
-    geom_line(aes(group = type, linetype = "solid",
-                  color = factor(type, levels = c("cases", "trt_adj", "rep_adj", "rep_weighted_adj", "both_adj")))) +
-    scale_color_manual("", values = c("#913058", "#F6851F", "#00A08A", "#8971B3", "#D61B5A")) +
-    scale_linetype_identity("") +
-    xlab("") + facet_wrap(~District, ncol = 4) +
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-          panel.background = element_blank(), axis.line = element_line(colour = "black"),
-          panel.spacing.x = unit(6, "mm"))
-
-
-plot2 <- ggplot(STL_result_DF_norm[which(STL_result_DF_norm$District %in% c("tougouri", "koudougou", "lena", "gaoua") &
-                                             STL_result_DF_norm$type %in% c("allout", "all_nonMal", "ratio", "both_adj")),],
-                aes(x = dates, y = trend)) +
-    geom_line(aes(group = type, linetype = "solid",
-                  color = factor(type, levels = c("allout", "all_nonMal", "ratio", "both_adj")))) +
-    scale_color_manual("", values = c("#5393C3", "#F1A31F", "#98B548", "#D61B5A")) +
-    scale_linetype_identity("") +
-    xlab("") + facet_wrap(~District, ncol = 4) +
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-          panel.background = element_blank(), axis.line = element_line(colour = "black"),
-          panel.spacing.x = unit(6, "mm"))
-
-
-
-grid.arrange(plot1, plot2, nrow = 2)
-
-
-
-
-
-plot1 <- ggplot(STL_result_DF_norm[which(STL_result_DF_norm$District %in% c("tougouri", "koudougou", "lena", "gaoua") &
-                                             STL_result_DF_norm$type %in% c("cases", "trt_adj", "both_adj")),],
-                aes(x = dates, y = raw)) +
-    geom_line(size = 1.25, alpha = .75, aes(group = type, linetype = "solid",
-                                            color = factor(type, levels = c("cases", "trt_adj", "both_adj")))) +
-    scale_linetype_identity("") + scale_color_discrete("") +
-    xlab("") + facet_wrap(~District, ncol = 4) +
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-          panel.background = element_blank(), axis.line = element_line(colour = "black"),
-          panel.spacing.x = unit(6, "mm"))
-
-
-plot2 <- ggplot(STL_result_DF_norm[which(STL_result_DF_norm$District %in% c("tougouri", "koudougou", "lena", "gaoua") &
-                                             STL_result_DF_norm$type %in% c("cases", "trt_adj", "both_adj")),],
-                aes(x = dates, y = trend)) +
-    geom_line(size = 1.25, alpha = .75, aes(group = type, linetype = "solid",
-                                            color = factor(type, levels = c("cases", "trt_adj", "both_adj")))) +
-    scale_linetype_identity("") + scale_color_discrete("") +
-    xlab("") + facet_wrap(~District, ncol = 4) +
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-          panel.background = element_blank(), axis.line = element_line(colour = "black"),
-          panel.spacing.x = unit(6, "mm"))
-
-grid.arrange(plot1, plot2, nrow = 2)
-
-
-
-
-
-plot2 <- ggplot(STL_result_DF_norm[which(STL_result_DF_norm$District %in% c("tougouri", "koudougou", "lena", "gaoua") &
-                                             STL_result_DF_norm$type %in% c("allout", "all_nonMal", "ratio", "both_adj")),],
-                aes(x = dates, y = seasonal)) +
-    geom_line(size = 1.25, alpha = .75, aes(group = type, linetype = "solid",
-                                            color = factor(type, levels = c("allout", "all_nonMal", "ratio", "both_adj")))) +
-    scale_linetype_identity("") + scale_color_discrete("") +
-    xlab("") + facet_wrap(~District, ncol = 4) +
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-          panel.background = element_blank(), axis.line = element_line(colour = "black"),
-          panel.spacing.x = unit(6, "mm"))
+facet_reporting_p <- ggplot(data = burkina_shape_DF_sens, aes(x = long, y = lat, group = group)) +
+    geom_polygon(aes(fill = plotting_sens_slope), color = "white") + 
+    coord_equal() + scale_fill_gradientn("Sen's slope coefficient", colors = colr) + theme_void() +
+    theme(plot.title = element_text(hjust = 0.5)) + facet_wrap(~type, ncol = 3)
 
 
 
@@ -678,3 +567,32 @@ plot2 <- ggplot(STL_result_DF_norm[which(STL_result_DF_norm$District %in% c("tou
 
 
 
+
+
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# STL_result_DF_slopes$sign <- sign(STL_result_DF_slopes$sens_slope_cases) * sign(STL_result_DF_slopes$sens_slope_ratio)
+# STL_result_DF_slopes$X <- ifelse(STL_result_DF_slopes$sens_slope_cases > 0 & STL_result_DF_slopes$sens_slope_ratio < 0 &
+#                                      STL_result_DF_slopes$MK_p_cases <= .05 & STL_result_DF_slopes$MK_p_ratio <= .05, -1, 0)
+# 
+# 
+# 
+# sum(STL_result_DF_slopes$sign == -1)
+# 
+# sum(STL_result_DF_slopes$X == -1)
+# 
+# 
+# 
+# 
+# 
+# 
+# 

@@ -48,7 +48,8 @@ getNormalized <- function(vec)
 # Loading health district dataset
 # Creating under-5 population column and fixing date column
 
-cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_DS_cases_seasonal_smc_good_rows_MA_imputes_testing.csv", header  = TRUE, strip.white = TRUE, stringsAsFactors = FALSE)
+# cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_DS_cases_seasonal_smc_good_rows_MA_imputes_testing.csv", header  = TRUE, strip.white = TRUE, stringsAsFactors = FALSE)
+cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_DS_cases_seasonal_smc_good_rows_MA_imputes_testing_w_rep_weights.csv", header  = TRUE, strip.white = TRUE, stringsAsFactors = FALSE)
 cases$U5_pop <- cases$District.Pop * .18
 cases$Date <- as.yearmon(cases$Date)
 
@@ -141,7 +142,7 @@ cases <- left_join(cases, medfever_DHS[,1:3], by = c("District", "year"))
 
 
 
-cases$cases_trtseeking_adj <- cases$conf_rdt_mic_u5 + (cases$conf_rdt_mic_u5 * (1 - cases$medfever))
+cases$cases_trtseeking_adj <- cases$conf_rdt_mic_u5 / cases$medfever
 
 
 
@@ -151,8 +152,10 @@ cases$rep_rate <- cases$reporting_HF / cases$total_HF
 # cases$cases_rep_adj <- cases$conf_rdt_mic_u5 + (cases$conf_rdt_mic_u5 * (1 - cases$rep_rate))
 cases$cases_rep_adj <- cases$conf_rdt_mic_u5 / cases$rep_rate
 
+cases$cases_rep_weighted_adj <- cases$conf_rdt_mic_u5 / cases$rep_weighted_rate
 
-cases$cases_both_adj <- cases$cases_rep_adj + (cases$cases_rep_adj * (1 - cases$medfever))
+
+cases$cases_both_adj <- cases$cases_rep_adj / cases$medfever
 
 
 

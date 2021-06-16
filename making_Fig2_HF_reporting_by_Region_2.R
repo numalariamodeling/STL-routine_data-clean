@@ -10,12 +10,23 @@ require("ggplot2")
 
 # Loading health facility dataset
 
-HF_cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_MA.csv", stringsAsFactors = FALSE)
+# HF_cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_MA.csv", stringsAsFactors = FALSE)
+HF_cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_testing_pres_MA.csv", stringsAsFactors = FALSE)
+
+
 
 HF_cases$Date <- as.Date(as.yearmon(HF_cases$Date))
 HF_cases <- HF_cases[order(HF_cases$UID, HF_cases$Date),]
 
 
+
+# HF_cases$prop <- HF_cases$conf_rdt_mic_u5 / HF_cases$allout_u5
+# HF_cases_D <- HF_cases[which(HF_cases$District == "sindou" & (HF_cases$year == 2016 | HF_cases$month == 10)),
+#                        c("UID", "Date", "conf_rdt_u5", "conf_mic_u5", "conf_rdt_mic_u5", "allout_u5", "prop")]
+# View(HF_cases_D)
+# View(HF_cases[which(HF_cases$UID == "dedougou dedougou csps karo"),
+#               c("Date", "conf_rdt_u5", "conf_mic_u5", "conf_rdt_mic_u5", "allout_u5", "prop")])
+# 
 
 
 #########################################################################################
@@ -80,5 +91,56 @@ ggplot(HF_cases_area_by_Region, aes(fill = Type, y = reports/total_HFs, x = Date
     scale_y_continuous(expand = c(0,0)) +
     facet_wrap(~Region) +
     theme(panel.spacing.x = unit(2, "mm"))
+
+
+
+
+
+
+###################################################################################################
+
+
+
+
+HF_cases_area <- HF_cases[,c("Region", "District", "UID", "Date")]
+
+HF_cases_area$bad_rows <- "good report"
+HF_cases_area[bad_rows_missing_allout_only, "bad_rows"] <- "missing all-cause outpatient visits"
+HF_cases_area[bad_rows_missing_rdt_only, "bad_rows"] <- "missing confirmed malaria cases"
+HF_cases_area[bad_rows_missing_both, "bad_rows"] <- "missing both values"
+HF_cases_area[bad_rows_inconsistent_only, "bad_rows"] <- "inconsistent report"
+
+
+HF_cases_area_casted <- dcast(HF_cases_area, Region + District + Date ~ bad_rows)
+HF_cases_area_casted$total_HFs <- rowSums(HF_cases_area_casted[,4:8])
+HF_cases_area_by_District <- melt(HF_cases_area_casted, id.vars = c("Region", "District", "Date", "total_HFs"),
+                                  variable.name = "Type", value.name = "reports")
+HF_cases_area_by_District$Type <- factor(HF_cases_area_by_District$Type,
+                                         levels = c("inconsistent report",
+                                                    "missing both values",
+                                                    "missing confirmed malaria cases",
+                                                    "missing all-cause outpatient visits",
+                                                    "good report"))
+
+
+for (R in unique(HF_cases_area_by_District$Region))
+{
+    tmp_p <- ggplot(HF_cases_area_by_District[which(HF_cases_area_by_District$Region == R),],
+                    aes(fill = Type, y = reports/total_HFs, x = Date))  + 
+        geom_area() + 
+        scale_x_date(expand = c(0,0)) +
+        scale_y_continuous(expand = c(0,0)) +
+        facet_wrap(~District) +
+        theme(panel.spacing.x = unit(2, "mm"))
+    
+    pdf(paste("~/OneDrive/Desktop/SI_figures_cleaned_for_Bea/reporting_by_region/rep_", R, ".pdf", sep = ""))
+    print(tmp_p)
+    dev.off()
+}
+
+
+
+
+
 
 

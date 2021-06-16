@@ -44,8 +44,8 @@ average_HF_counts_per_month[is.infinite(average_HF_counts_per_month$average_coun
 
 average_District_counts_per_month <- ddply(average_HF_counts_per_month, c(.(District), .(month)), summarise,
                                            sum_avg_counts_HF = sum(average_counts_HF))
-                                     
-                                           
+
+
 
 average_counts_per_month <- left_join(average_District_counts_per_month, average_HF_counts_per_month,
                                       by = c("District", "month"))
@@ -73,7 +73,6 @@ HF_cases <- left_join(HF_cases, average_counts_per_month[,c("UID", "Date", "weig
 good_rows <- which(!is.na(HF_cases$conf_rdt_u5) &
                        !is.na(HF_cases$allout_u5) &
                        HF_cases$allout_u5 != 0 &
-                       HF_cases$conf_rdt_mic_u5 <= HF_cases$allout_u5 &
                        HF_cases$conf_rdt_mic_u5 <= HF_cases$test_rdt_mic_u5)
 
 
@@ -86,7 +85,7 @@ bad_rows_age2 <- which(is.na(HF_cases_good$conf_rdt_age2) & !is.na(HF_cases_good
                            HF_cases_good$conf_rdt_age1 == HF_cases_good$conf_rdt_u5)
 HF_cases_good <- HF_cases_good[-c(bad_rows_age1, bad_rows_age2),]
 
-# 47100 removed
+# 47507 removed
 
 
 HF_reporting_weighted <- ddply(HF_cases_good, c(.(District), .(Date)), summarise,
@@ -102,8 +101,8 @@ HF_reporting_weighted$rep_rate <- HF_reporting_weighted$reporting_HF / HF_report
 
 
 
-# plot(HF_reporting_weighted$weighted_rep_rate, HF_reporting_weighted$rep_rate)
-# abline(c(0, 1))
+plot(HF_reporting_weighted$weighted_rep_rate, HF_reporting_weighted$rep_rate)
+abline(c(0, 1))
 
 
 
@@ -142,7 +141,7 @@ D_cases <- left_join(D_cases, HF_reporting_weighted, by = c("District", "Date", 
 
 # Saving
 
-write.csv(D_cases, "~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_DS_cases_seasonal_smc_good_rows_MA_imputes_testing_w_rep_weights.csv", row.names = FALSE)
+write.csv(D_cases, "~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_DS_cases_seasonal_smc_MA_imputes_pres_w_rep_weights_checking_OCT.csv", row.names = FALSE)
 
 
 

@@ -140,7 +140,7 @@ facet_medfever_p <- ggplot(data = burkina_shape_DF_medfever, aes(x = long, y = l
     ggtitle("Regional febrile treatment seeking rate") +
     geom_polygon(aes(fill = medfever_regional), color = "white") + 
     coord_equal() + scale_fill_gradientn("Treatment seeking rate", colors = colr) + theme_void() +
-    theme(plot.title = element_text(hjust = 0.5)) + facet_wrap(~factor(year, levels = c("2014", "diff", "2017")))
+    theme(plot.title = element_text(hjust = 0.5)) + facet_wrap(~factor(year, levels = c("2014", "2017")))
 
 
 

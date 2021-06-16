@@ -24,11 +24,15 @@ library("zoo")
 library("gridExtra")
 
 library("lubridate")
+library("reshape2")
 
 
 ## Grabbing data and cleaning for making figure 1
 
-HF_cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_MA.csv")
+
+HF_cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_testing_pres_MA.csv")
+HF_cases_2 <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_MA.csv")
+
 HF_cases$Date <- as.Date(as.yearmon(HF_cases$Date))
 HF_cases <- HF_cases[order(HF_cases$UID, HF_cases$Date),]
 
@@ -63,27 +67,73 @@ HF_cases$good_obs <- 1
 HF_cases[bad_rows, "good_obs"] <- 0
 
 reporting_DF <- ddply(HF_cases, .(Date), summarize,
-                      "good reports" = sum(good_obs),
+                      "good reports (cleaned)" = sum(good_obs),
                       "any reports" = sum(HF_reporting),
                       total_facilities = length(unique(UID)))
 reporting_DF$Date <- as.Date(as.yearmon(reporting_DF$Date))
 reporting_DF <- reporting_DF[order(reporting_DF$Date),]
 
+
+
+
+
+
+
+
+
+bad_rows_age1 <- which(is.na(HF_cases_2$conf_rdt_age1) & !is.na(HF_cases_2$conf_rdt_age2) &
+                         !is.na(HF_cases_2$conf_rdt_u5) &
+                         HF_cases_2$conf_rdt_age2 == HF_cases_2$conf_rdt_u5)
+bad_rows_age2 <- which(is.na(HF_cases_2$conf_rdt_age2) & !is.na(HF_cases_2$conf_rdt_age1) &
+                         !is.na(HF_cases_2$conf_rdt_u5) &
+                         HF_cases_2$conf_rdt_age1 == HF_cases_2$conf_rdt_u5)
+bad_rows_u5 <- which(is.na(HF_cases_2$conf_rdt_u5) |
+                       is.na(HF_cases_2$allout_u5) |
+                       HF_cases_2$allout_u5 == 0 |
+                       HF_cases_2$conf_rdt_mic_u5 > HF_cases_2$allout_u5)
+
+bad_rows_2 <- unique(c(bad_rows_age1, bad_rows_age2, bad_rows_u5))
+
+
+HF_cases_2$good_obs <- 1
+HF_cases_2[bad_rows_2, "good_obs"] <- 0
+
+reporting_DF_2 <- ddply(HF_cases_2, .(Date), summarize,
+                        "good reports" = sum(good_obs))
+reporting_DF_2$Date <- as.Date(as.yearmon(reporting_DF_2$Date))
+reporting_DF_2 <- reporting_DF_2[order(reporting_DF_2$Date),]
+
+
+reporting_DF <- left_join(reporting_DF, reporting_DF_2, by = "Date")
+
+
+
 reporting_DF_melted <- melt(reporting_DF[,-4], id = "Date")
+
+reporting_DF_melted$variable <- factor(as.factor(reporting_DF_melted$variable),
+                                       levels = c("any reports", "good reports (cleaned)", "good reports"))
+
+
+
 
 
 
 ## Figure 1
-ggplot(reporting_DF) + geom_line(aes(x = Date, y = good_reports), col = "darkgreen") +
-    geom_line(aes(x = Date, y = any_reports)) +
-    scale_y_continuous(name = "Number of health facilities with complete reporting")
-
+# ggplot(reporting_DF) + geom_line(aes(x = Date, y = good_reports), col = "darkgreen") +
+#     geom_line(aes(x = Date, y = any_reports)) +
+#     scale_y_continuous(name = "Number of health facilities with complete reporting")
+# 
 
 
 ggplot(reporting_DF_melted,
        aes(x = Date, y = value, color = as.factor(variable))) +
-    geom_line() + scale_color_manual(values = c("black", "darkgreen"),
-                                     breaks = c("any reports", "good reports"),
+    geom_line(size = 1) + scale_color_manual(values = c("black", "darkgreen", "blue"),
+                                     breaks = c("any reports", "good reports (cleaned)", "good reports"),
                                      name = "") +
     scale_y_continuous(name = "Number of health facilities with complete reporting")
+
+
+
+
+
 
