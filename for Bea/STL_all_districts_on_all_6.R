@@ -214,24 +214,26 @@ cases$cases_both_adj <- cases$cases_rep_weighted_adj / cases$medfever_regional
 
 
 
-cases$all_cases_rep_weighted_adj <- cases$all_cases / cases$weighted_rep_rate
-cases$all_nonMal_cases_rep_weighted_adj <- cases$all_nonMal_cases / cases$weighted_rep_rate
+cases$all_cases_rep_weighted_adj <- cases$all_cases / cases$weighted_rep_rate_all_cause
+cases$all_nonMal_cases_rep_weighted_adj <- cases$all_cases_rep_weighted_adj - cases$cases_rep_weighted_adj
+
+
+
+cases$mal_ratio_weighted <- cases$cases_rep_weighted_adj / cases$all_cases_rep_weighted_adj
 
 
 
 
 
-
-
-ggplot(cases, aes(x = Date, y = medfever_regional,
-                  group = as.factor(Region))) +
-    geom_line(aes(col = as.factor(Region)), size = 1, show.legend = FALSE) + ylab("") +
-    ggtitle("Step-function of Regional treatment seeking rates") +
-    scale_x_yearmon("Date", breaks = sort(unique(cases$Date))[c(seq(1,48,6), 48)],
-                    labels = sort(unique(cases$Date))[c(seq(1,48,6), 48)]) +
-    theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
-                       panel.border = element_blank(), panel.grid.major = element_blank(),
-                       panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
+# ggplot(cases, aes(x = Date, y = medfever_regional,
+#                   group = as.factor(Region))) +
+#     geom_line(aes(col = as.factor(Region)), size = 1, show.legend = FALSE) + ylab("") +
+#     ggtitle("Step-function of Regional treatment seeking rates") +
+#     scale_x_yearmon("Date", breaks = sort(unique(cases$Date))[c(seq(1,48,6), 48)],
+#                     labels = sort(unique(cases$Date))[c(seq(1,48,6), 48)]) +
+#     theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+#                        panel.border = element_blank(), panel.grid.major = element_blank(),
+#                        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
 
 
 
@@ -279,7 +281,8 @@ all_cases_weight_rep_adj_pouytenga_Dec_2017 <- mean(c(cases$all_cases_rep_weight
                                                       cases$all_cases_rep_weighted_adj[pouytenga_ind_Jan_2018]))
 all_nonMal_weight_rep_adj_pouytenga_Dec_2017 <- mean(c(cases$all_nonMal_cases_rep_weighted_adj[pouytenga_ind_Nov_2017],
                                                        cases$all_nonMal_cases_rep_weighted_adj[pouytenga_ind_Jan_2018]))
-
+mal_ratio_weighted_pouytenga_Dec_2017 <- mean(c(cases$mal_ratio_weighted[pouytenga_ind_Nov_2017],
+                                                cases$mal_ratio_weighted[pouytenga_ind_Jan_2018]))
 
 
 pouytenga_Dec_2017_row_tmp <- cases[pouytenga_ind_Nov_2017,]
@@ -295,6 +298,7 @@ pouytenga_Dec_2017_row_tmp$cases_rep_weighted_adj <- weight_rep_adj_pouytenga_De
 pouytenga_Dec_2017_row_tmp$cases_both_adj <- both_adj_pouytenga_Dec_2017
 pouytenga_Dec_2017_row_tmp$all_cases_rep_weighted_adj <- all_cases_weight_rep_adj_pouytenga_Dec_2017
 pouytenga_Dec_2017_row_tmp$all_nonMal_cases_rep_weighted_adj <- all_nonMal_weight_rep_adj_pouytenga_Dec_2017
+pouytenga_Dec_2017_row_tmp$mal_ratio_weighted <- mal_ratio_weighted_pouytenga_Dec_2017
 
 
 cases <- rbind(cases[1:pouytenga_ind_Nov_2017,],
@@ -372,9 +376,15 @@ for (DS in sort(unique(cases$District)))
     all_cases_rep_weighted_adj_norm_ts <- ts(all_cases_rep_weighted_adj_norm, start = c(2015, 1), deltat = 1/12)
     all_cases_rep_weighted_adj_stl <- stlplus(all_cases_rep_weighted_adj_norm_ts, s.window="periodic")
     
+    
     all_nonMal_rep_weighted_adj_norm <- getNormalized(cases_dist$all_nonMal_cases_rep_weighted_adj)
     all_nonMal_rep_weighted_adj_norm_ts <- ts(all_nonMal_rep_weighted_adj_norm, start = c(2015, 1), deltat = 1/12)
     all_nonMal_rep_weighted_adj_stl <- stlplus(all_nonMal_rep_weighted_adj_norm_ts, s.window="periodic")
+    
+    
+    mal_ratio_weighted_norm <- getNormalized(cases_dist$mal_ratio_weighted)
+    mal_ratio_weighted_norm_ts <- ts(mal_ratio_weighted_norm, start = c(2015, 1), deltat = 1/12)
+    ratio_weighted_stl <- stlplus(mal_ratio_weighted_norm_ts, s.window="periodic")
     
     
     
@@ -385,63 +395,57 @@ for (DS in sort(unique(cases$District)))
     
     cases_stl_ts <- as.data.frame(cases_stl$data[,1:4]) 
     cases_stl_ts$type <- rep("cases", nrow(cases_stl_ts))
-    cases_stl_ts$lty <- rep("solid", nrow(cases_stl_ts))
     cases_stl_ts$dates <- dates
     
     
     all_cases_stl_ts <- as.data.frame(all_cases_stl$data[,1:4]) 
     all_cases_stl_ts$type <- rep("allout", nrow(all_cases_stl_ts))
-    all_cases_stl_ts$lty <- rep("solid", nrow(all_cases_stl_ts))
     all_cases_stl_ts$dates <- dates
     
     
     all_nonMal_cases_stl_ts <- as.data.frame(all_nonMal_cases_stl$data[,1:4]) 
     all_nonMal_cases_stl_ts$type <- rep("all_nonMal", nrow(all_nonMal_cases_stl_ts))
-    all_nonMal_cases_stl_ts$lty <- rep("solid", nrow(all_nonMal_cases_stl_ts))
     all_nonMal_cases_stl_ts$dates <- dates
     
     
     ratio_stl_ts <- as.data.frame(ratio_stl$data[,1:4]) 
     ratio_stl_ts$type <- rep("ratio", nrow(ratio_stl_ts))
-    ratio_stl_ts$lty <- rep("longdash", nrow(ratio_stl_ts))
     ratio_stl_ts$dates <- dates
     
     
     trt_adj_stl_ts <- as.data.frame(trt_adj_stl$data[,1:4]) 
     trt_adj_stl_ts$type <- rep("trt_adj", nrow(trt_adj_stl_ts))
-    trt_adj_stl_ts$lty <- rep("longdash", nrow(trt_adj_stl_ts))
     trt_adj_stl_ts$dates <- dates
     
     
     rep_adj_stl_ts <- as.data.frame(rep_adj_stl$data[,1:4]) 
     rep_adj_stl_ts$type <- rep("rep_adj", nrow(rep_adj_stl_ts))
-    rep_adj_stl_ts$lty <- rep("longdash", nrow(rep_adj_stl_ts))
     rep_adj_stl_ts$dates <- dates
     
     
     rep_weighted_adj_stl_ts <- as.data.frame(rep_weighted_adj_stl$data[,1:4]) 
     rep_weighted_adj_stl_ts$type <- rep("rep_weighted_adj", nrow(rep_weighted_adj_stl_ts))
-    rep_weighted_adj_stl_ts$lty <- rep("longdash", nrow(rep_weighted_adj_stl_ts))
     rep_weighted_adj_stl_ts$dates <- dates
     
     
     both_adj_stl_ts <- as.data.frame(both_adj_stl$data[,1:4]) 
     both_adj_stl_ts$type <- rep("both_adj", nrow(both_adj_stl_ts))
-    both_adj_stl_ts$lty <- rep("longdash", nrow(both_adj_stl_ts))
     both_adj_stl_ts$dates <- dates
     
     
     all_cases_rep_weighted_adj_stl_ts <- as.data.frame(all_cases_rep_weighted_adj_stl$data[,1:4]) 
     all_cases_rep_weighted_adj_stl_ts$type <- rep("allout_rep_weighted_adj", nrow(all_cases_rep_weighted_adj_stl_ts))
-    all_cases_rep_weighted_adj_stl_ts$lty <- rep("longdash", nrow(all_cases_rep_weighted_adj_stl_ts))
     all_cases_rep_weighted_adj_stl_ts$dates <- dates
     
     
     all_nonMal_rep_weighted_adj_stl_ts <- as.data.frame(all_nonMal_rep_weighted_adj_stl$data[,1:4]) 
     all_nonMal_rep_weighted_adj_stl_ts$type <- rep("all_nonMal_rep_weighted_adj", nrow(all_nonMal_rep_weighted_adj_stl_ts))
-    all_nonMal_rep_weighted_adj_stl_ts$lty <- rep("longdash", nrow(all_nonMal_rep_weighted_adj_stl_ts))
     all_nonMal_rep_weighted_adj_stl_ts$dates <- dates
     
+    
+    ratio_weighted_stl_ts <- as.data.frame(ratio_weighted_stl$data[,1:4]) 
+    ratio_weighted_stl_ts$type <- rep("ratio_weighted", nrow(ratio_weighted_stl_ts))
+    ratio_weighted_stl_ts$dates <- dates
     
     
     
@@ -456,7 +460,8 @@ for (DS in sort(unique(cases$District)))
                                    rep_weighted_adj_stl_ts,
                                    both_adj_stl_ts,
                                    all_cases_rep_weighted_adj_stl_ts,
-                                   all_nonMal_rep_weighted_adj_stl_ts)
+                                   all_nonMal_rep_weighted_adj_stl_ts,
+                                   ratio_weighted_stl_ts)
     STL_result_DF_DS_norm$District <- DS
     
     
@@ -521,11 +526,11 @@ for (i in seq(1,70,8))
               panel.spacing.x = unit(6, "mm"))
     
 
-    plot_trend_2 <- ggplot(plotting_DF[which(plotting_DF$type %in% c("allout", "all_nonMal", "ratio", "both_adj")),],
+    plot_trend_2 <- ggplot(plotting_DF[which(plotting_DF$type %in% c("allout", "all_nonMal", "ratio", "ratio_weighted", "both_adj")),],
                            aes(x = dates, y = trend)) +
         geom_line(aes(group = type, linetype = "solid",
-                  color = factor(type, levels = c("allout", "all_nonMal", "ratio", "both_adj")))) +
-        scale_color_manual("", values = c("#5393C3", "#F1A31F", "#98B548", "#D61B5A")) + scale_linetype_identity("") + 
+                  color = factor(type, levels = c("allout", "all_nonMal", "ratio", "ratio_weighted", "both_adj")))) +
+        scale_color_manual("", values = c("#5393C3", "#F1A31F", "#98B548", "#F6851F", "#D61B5A")) + scale_linetype_identity("") + 
         xlab("") + facet_wrap(~District, ncol = 4) +
         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(), axis.line = element_line(colour = "black"),
@@ -572,11 +577,11 @@ for (i in seq(1,70,8))
     plotting_DF <- STL_result_DF_norm[which(STL_result_DF_norm$District %in% DS_list),]
 
     
-    plot_trend <- ggplot(plotting_DF[which(plotting_DF$type %in% c("cases", "both_adj", "ratio")),],
+    plot_trend <- ggplot(plotting_DF[which(plotting_DF$type %in% c("cases", "both_adj", "ratio", "ratio_weighted")),],
                            aes(x = dates, y = trend)) +
         geom_line(aes(group = type, linetype = "solid",
-                      color = factor(type, levels = c("cases", "both_adj", "ratio")))) +
-        scale_color_manual("", values = c("#913058", "#D61B5A", "#98B548")) + scale_linetype_identity("") + 
+                      color = factor(type, levels = c("cases", "both_adj", "ratio", "ratio_weighted")))) +
+        scale_color_manual("", values = c("#913058", "#D61B5A", "#98B548", "#F6851F")) + scale_linetype_identity("") + 
         xlab("") + facet_wrap(~District, ncol = 4) +
         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(), axis.line = element_line(colour = "black"),
@@ -612,11 +617,11 @@ plot1 <- ggplot(STL_result_DF_norm[which(STL_result_DF_norm$District %in% c("tou
 
 
 plot2 <- ggplot(STL_result_DF_norm[which(STL_result_DF_norm$District %in% c("tougouri", "koudougou", "lena", "gaoua") &
-                                             STL_result_DF_norm$type %in% c("allout", "all_nonMal", "ratio", "both_adj")),],
+                                             STL_result_DF_norm$type %in% c("allout", "all_nonMal", "ratio", "ratio_weighted", "both_adj")),],
                 aes(x = dates, y = trend)) +
     geom_line(aes(group = type, linetype = "solid",
-                  color = factor(type, levels = c("allout", "all_nonMal", "ratio", "both_adj")))) +
-    scale_color_manual("", values = c("#5393C3", "#F1A31F", "#98B548", "#D61B5A")) +
+                  color = factor(type, levels = c("allout", "all_nonMal", "ratio", "ratio_weighted", "both_adj")))) +
+    scale_color_manual("", values = c("#5393C3", "#F1A31F", "#98B548", "#F6851F", "#D61B5A")) +
     scale_linetype_identity("") +
     xlab("") + facet_wrap(~District, ncol = 4) +
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -661,10 +666,10 @@ grid.arrange(plot1, plot2, nrow = 2)
 
 
 plot2 <- ggplot(STL_result_DF_norm[which(STL_result_DF_norm$District %in% c("tougouri", "koudougou", "lena", "gaoua") &
-                                             STL_result_DF_norm$type %in% c("allout", "all_nonMal", "ratio", "both_adj")),],
+                                             STL_result_DF_norm$type %in% c("allout", "all_nonMal", "ratio", "ratio_weighted", "both_adj")),],
                 aes(x = dates, y = seasonal)) +
     geom_line(size = 1.25, alpha = .75, aes(group = type, linetype = "solid",
-                                            color = factor(type, levels = c("allout", "all_nonMal", "ratio", "both_adj")))) +
+                                            color = factor(type, levels = c("allout", "all_nonMal", "ratio", "ratio_weighted", "both_adj")))) +
     scale_linetype_identity("") + scale_color_discrete("") +
     xlab("") + facet_wrap(~District, ncol = 4) +
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),

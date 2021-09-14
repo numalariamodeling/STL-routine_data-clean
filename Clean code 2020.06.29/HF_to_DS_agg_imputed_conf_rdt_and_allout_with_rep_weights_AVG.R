@@ -24,7 +24,7 @@ require("lubridate")
 
 # Loading health facility dataset
 
-HF_cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_testing_pres_MA.csv", stringsAsFactors = FALSE)
+HF_cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_MA.csv", stringsAsFactors = FALSE)
 HF_cases$Date <- as.yearmon(HF_cases$Date)
 
 
@@ -58,9 +58,8 @@ average_counts_per_month <- left_join(average_District_counts_per_month, average
 average_counts_per_month <- left_join(average_counts_per_month, tmp_total_HF,
                                       by = c("District", "month"))
 
-# average_counts_per_month <- average_counts_per_month[-which(average_counts_per_month$na_counts_HF == 4),]
-average_counts_per_month$weights <- average_counts_per_month$average_counts_HF / average_counts_per_month$sum_avg_counts_HF
 
+average_counts_per_month$weights <- average_counts_per_month$average_counts_HF / average_counts_per_month$sum_avg_counts_HF
 average_counts_per_month$weights_all_cause <- average_counts_per_month$average_all_counts_HF / average_counts_per_month$sum_avg_all_counts_HF
 
 
@@ -70,12 +69,16 @@ tmp_total_HF_weighted <- ddply(average_counts_per_month, c(.(District), .(Date))
                                total_HF_weighted_all_cause = sum(weights_all_cause))
 
 
-#################################################################################################################################
+
+##################################################################################################
+
 
 HF_cases <- left_join(HF_cases, average_counts_per_month[,c("UID", "Date", "weights", "weights_all_cause")],
                       by = c("UID", "Date"))
 
-#################################################################################################################################
+
+##################################################################################################
+
 
 
 good_rows <- which(!is.na(HF_cases$conf_rdt_u5) &
@@ -111,16 +114,9 @@ HF_reporting_weighted$weighted_rep_rate_all_cause <- HF_reporting_weighted$repor
 
 
 
-# plot(HF_reporting_weighted$weighted_rep_rate, HF_reporting_weighted$rep_rate)
-# abline(c(0, 1))
 
 
-
-
-
-
-
-#################################################################################################################################
+##################################################################################################
 
 
 
@@ -144,14 +140,13 @@ D_cases <- left_join(D_cases, unique_rows,
 
 
 
-
 D_cases <- left_join(D_cases, HF_reporting_weighted, by = c("District", "Date", "month"))
 
 
 
 # Saving
 
-write.csv(D_cases, "~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_DS_cases_seasonal_smc_good_rows_MA_imputes_testing_w_rep_weights_2.csv", row.names = FALSE)
+write.csv(D_cases, "~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_DS_cases_seasonal_smc_good_rows_MA_imputes_w_rep_weights.csv", row.names = FALSE)
 
 
 

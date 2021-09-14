@@ -150,6 +150,110 @@ abline(c(0, 1))
 
 
 
+ggplot(cases) +
+    geom_line(aes(x = Date, y = rep_rate,
+                  group = as.factor(District)),
+              alpha = 0.25, size = 1, show.legend = FALSE, color = "blue") +
+    geom_line(aes(x = Date, y = weighted_rep_rate,
+                  group = as.factor(District)),
+              alpha = 0.25, size = 1, show.legend = FALSE, color = "red") + ylab("") +
+    ggtitle("Health facility weighted reporting rate by District") +
+    scale_x_yearmon("Date", breaks = sort(unique(cases$Date))[c(seq(1,48,6), 48)],
+                    labels = sort(unique(cases$Date))[c(seq(1,48,6), 48)]) +
+    theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+                       panel.border = element_blank(), panel.grid.major = element_blank(),
+                       panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+cases$allout_rep_weighted_adj <- cases$allout_u5 / cases$weighted_rep_rate_all_cause
+
+
+
+ggplot(cases, aes(x = Date, y = allout_rep_weighted_adj / (U5_pop/1000),
+                  group = as.factor(District))) +
+    geom_line(alpha = 0.25, size = 1, show.legend = FALSE, color = "blue") + ylab("Cases per 1000") +
+    ggtitle("All-cause outpatient visits among u5 (w/ rep weights)") +
+    scale_x_yearmon("Date", breaks = sort(unique(cases$Date))[c(seq(1,48,6), 48)],
+                    labels = sort(unique(cases$Date))[c(seq(1,48,6), 48)]) +
+    theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+                       panel.border = element_blank(), panel.grid.major = element_blank(),
+                       panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
+
+
+
+ggplot(cases, aes(x = Date, y = weighted_rep_rate_all_cause,
+                  group = as.factor(District))) +
+    geom_line(alpha = 0.25, size = 1, show.legend = FALSE, color = "blue") + ylab("") +
+    ggtitle("Health facility weighted reporting rate by District") +
+    scale_x_yearmon("Date", breaks = sort(unique(cases$Date))[c(seq(1,48,6), 48)],
+                    labels = sort(unique(cases$Date))[c(seq(1,48,6), 48)]) +
+    theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+                       panel.border = element_blank(), panel.grid.major = element_blank(),
+                       panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
+
+
+plot(cases$allout_rep_weighted_adj / (cases$U5_pop/1000), cases$allout_u5 / (cases$U5_pop/1000))
+abline(c(0, 1))
+
+
+
+plot(cases$weighted_rep_rate_all_cause, cases$rep_rate)
+abline(c(0, 1))
+
+
+
+
+
+
+
+ggplot(cases, aes(x = Date, y = (allout_rep_weighted_adj - cases_rep_weighted_adj) / (U5_pop/1000),
+                  group = as.factor(District))) +
+    geom_line(alpha = 0.25, size = 1, show.legend = FALSE, color = "blue") + ylab("Cases per 1000") +
+    ggtitle("Non-malarial outpatient visits among u5 (w/ rep weights)") +
+    scale_x_yearmon("Date", breaks = sort(unique(cases$Date))[c(seq(1,48,6), 48)],
+                    labels = sort(unique(cases$Date))[c(seq(1,48,6), 48)]) +
+    theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+                       panel.border = element_blank(), panel.grid.major = element_blank(),
+                       panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+ggplot(cases, aes(x = Date, y = cases_rep_weighted_adj / allout_rep_weighted_adj,
+                  group = as.factor(District))) +
+    geom_line(alpha = 0.25, size = 1, show.legend = FALSE, color = "blue") + ylab("") +
+    ggtitle("Health facility weighted reporting rate by District") +
+    scale_x_yearmon("", breaks = sort(unique(cases$Date))[c(seq(1,48,6), 48)],
+                    labels = sort(unique(cases$Date))[c(seq(1,48,6), 48)]) +
+    theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+                       panel.border = element_blank(), panel.grid.major = element_blank(),
+                       panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
+
+
+
+
+
+
 
 
 
@@ -405,7 +509,7 @@ ggplot(cases_no2015, aes(x = Date, y = N3_adj / (U5_pop/1000),
 
 
 
-cases$cases_weighted_reporting_trtseeking_adj <- cases$cases_rep_weighted_adj / cases$medfever_regional
+cases$cases_weighted_reporting_trtseeking_adj <- cases$cases_rep_weighted_adj / cases$fitted_regional_medfever
 
 
 

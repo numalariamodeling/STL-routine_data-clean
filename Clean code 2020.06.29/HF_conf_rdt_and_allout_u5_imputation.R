@@ -48,12 +48,6 @@ HF_cases[which(HF_cases$UID == "tenkodogo tenkodogo csps urbain ii" & HF_cases$D
 HF_cases[which(HF_cases$UID == "toma toma cma toma" & HF_cases$Date == "2018-08-01"), "allout_u5"] <- NA
 HF_cases[which(HF_cases$UID == "sapone ipelce csps ipelce" & HF_cases$Date == "2016-09-01"), "allout_u5"] <- NA
 
-HF_cases[which(HF_cases$UID == "leo to csps gori" & HF_cases$Date == "2016-07-01"), "susp_u5"] <- NA
-HF_cases[which(HF_cases$UID == "djibo aribinda cm aribinda" & HF_cases$Date == "2016-11-01"), "susp_u5"] <- NA
-HF_cases[which(HF_cases$UID == "gaoua malba csps malba" & HF_cases$Date == "2016-10-01"), "susp_u5"] <- NA
-HF_cases[which(HF_cases$UID == "boulmiougou tanghin dassouri cm tanghin dassouri" & HF_cases$Date == "2017-02-01"), "susp_u5"] <- NA
-
-HF_cases[which(HF_cases$UID == "koudougou koudougou cm koudougou" & HF_cases$Date == "2016-11-01"), "test_rdt_u5"] <- NA
 
 HF_cases[which(HF_cases$UID == "kampti kampti csps latara" & HF_cases$Date == "2017-03-01"), "conf_rdt_ov5"] <- NA
 HF_cases[which(HF_cases$UID == "nouna djibasso csps ba" & HF_cases$Date == "2016-05-01"), "conf_rdt_ov5"] <- NA
@@ -105,7 +99,7 @@ HF_cases$SMC.coverage <- round(HF_cases$SMC.coverage, digits = 3)
 
 
 
-apply(HF_cases[,c("allout_u5", "conf_rdt_u5", "conf_mic_u5", "test_rdt_u5", "susp_u5", "maltreat_u5")], 2, function(y) sum(is.na(y)))
+apply(HF_cases[,c("allout_u5", "conf_rdt_u5", "conf_mic_u5")], 2, function(y) sum(!is.na(y)))
 
 
 
@@ -222,168 +216,6 @@ for (U in unique(result_imputed_conf_u5_DF$UID))
 
 ####################################################################
 
-rle.try_test_u5 <- ddply(HF_cases, .(UID), summarize,
-                         is_NA = rle(is.na(test_rdt_u5))[2],
-                         consec_NAs = rle(is.na(test_rdt_u5))[1])
-
-####################################################################
-
-
-consec_NA_list_test_u5 <- split(rle.try_test_u5[,2:3], rle.try_test_u5$UID)
-consec_NA_list_test_u5_reshaped <- lapply(consec_NA_list_test_u5, function(x) {
-    x <- do.call(cbind.data.frame, x);
-    names(x) <- c("is.NA", "consec vals");
-    return(x) })
-
-
-## Finding HFs that have leq 5 NAs and no more than 2 in a row
-imputing_HFs_test_u5_list <- sapply(consec_NA_list_test_u5_reshaped, function(x) {
-    na_rows <- which(x$is.NA == TRUE);
-    num_NAs <- sum(x[na_rows, "consec vals"]);
-    
-    if (num_NAs > 0 & num_NAs <= 6 & !(0 %in% as.numeric(x[na_rows, "consec vals"] <= 2)))
-    {
-        return(TRUE)
-    } else {
-        return(FALSE)
-    }
-})
-
-imputing_HFs_test_u5_data <- HF_cases[which(HF_cases$UID %in% names(imputing_HFs_test_u5_list[imputing_HFs_test_u5_list == TRUE])),]
-
-
-
-imputing_HFs_test_u5_data_list <- split(imputing_HFs_test_u5_data$test_rdt_u5, as.character(imputing_HFs_test_u5_data$UID))
-
-new_imputed_HFs_test_u5_data_list <- lapply(imputing_HFs_test_u5_data_list, function(x) {
-    
-    cases_ts <- ts(x, start = c(2015, 1), deltat = 1/12);
-    imp_cases <- na_seadec(cases_ts, algorithm = "ma");
-    
-    return(as.numeric(round(imp_cases))); # we round to preserve whole numbers
-})
-
-
-result_imputed_test_u5_DF <- data.frame("UID" = sort(rep(names(new_imputed_HFs_test_u5_data_list), 48)),
-                                        "Date" = rep(unique(HF_cases$Date), length(new_imputed_HFs_test_u5_data_list)),
-                                        "imputed_test_rdt_u5" = unlist(new_imputed_HFs_test_u5_data_list, use.names = F))
-
-for (U in unique(result_imputed_test_u5_DF$UID))
-    HF_cases[which(HF_cases$UID == U), "test_rdt_u5"] <- result_imputed_test_u5_DF[which(result_imputed_test_u5_DF$UID == U), "imputed_test_rdt_u5"]
-
-
-
-
-####################################################################
-
-rle.try_susp_u5 <- ddply(HF_cases[HF_cases$year != 2015,], .(UID), summarize,
-                         is_NA = rle(is.na(susp_u5))[2],
-                         consec_NAs = rle(is.na(susp_u5))[1])
-
-####################################################################
-
-
-consec_NA_list_susp_u5 <- split(rle.try_susp_u5[,2:3], rle.try_susp_u5$UID)
-consec_NA_list_susp_u5_reshaped <- lapply(consec_NA_list_susp_u5, function(x) {
-    x <- do.call(cbind.data.frame, x);
-    names(x) <- c("is.NA", "consec vals");
-    return(x) })
-
-
-## Finding HFs that have leq 5 NAs and no more than 2 in a row
-imputing_HFs_susp_u5_list <- sapply(consec_NA_list_susp_u5_reshaped, function(x) {
-    na_rows <- which(x$is.NA == TRUE);
-    num_NAs <- sum(x[na_rows, "consec vals"]);
-    
-    if (num_NAs > 0 & num_NAs <= 6 & !(0 %in% as.numeric(x[na_rows, "consec vals"] <= 2)))
-    {
-        return(TRUE)
-    } else {
-        return(FALSE)
-    }
-})
-
-imputing_HFs_susp_u5_data <- HF_cases[which(HF_cases$UID %in% names(imputing_HFs_susp_u5_list[imputing_HFs_susp_u5_list == TRUE])),]
-imputing_HFs_susp_u5_data <- imputing_HFs_susp_u5_data[imputing_HFs_susp_u5_data$year != 2015,]
-
-
-imputing_HFs_susp_u5_data_list <- split(imputing_HFs_susp_u5_data$susp_u5, as.character(imputing_HFs_susp_u5_data$UID))
-
-new_imputed_HFs_susp_u5_data_list <- lapply(imputing_HFs_susp_u5_data_list, function(x) {
-    
-    cases_ts <- ts(x, start = c(2016, 1), deltat = 1/12);
-    imp_cases <- na_seadec(cases_ts, algorithm = "ma");
-    
-    
-    return(as.numeric(round(imp_cases))); # we round to preserve whole numbers
-})
-
-
-result_imputed_susp_u5_DF <- data.frame("UID" = sort(rep(names(new_imputed_HFs_susp_u5_data_list), 36)),
-                                        "Date" = rep(unique(HF_cases[HF_cases$year != 2015, "Date"]), length(new_imputed_HFs_susp_u5_data_list)),
-                                        "imputed_susp_u5" = unlist(new_imputed_HFs_susp_u5_data_list, use.names = F))
-
-for (U in unique(result_imputed_susp_u5_DF$UID))
-    HF_cases[which(HF_cases$UID == U & HF_cases$year != 2015), "susp_u5"] <- result_imputed_susp_u5_DF[which(result_imputed_susp_u5_DF$UID == U), "imputed_susp_u5"]
-
-
-
-####################################################################
-
-rle.try_maltreat_u5 <- ddply(HF_cases[HF_cases$year != 2015,], .(UID), summarize,
-                             is_NA = rle(is.na(maltreat_u5))[2],
-                             consec_NAs = rle(is.na(maltreat_u5))[1])
-
-####################################################################
-
-
-consec_NA_list_maltreat_u5 <- split(rle.try_maltreat_u5[,2:3], rle.try_maltreat_u5$UID)
-consec_NA_list_maltreat_u5_reshaped <- lapply(consec_NA_list_maltreat_u5, function(x) {
-    x <- do.call(cbind.data.frame, x);
-    names(x) <- c("is.NA", "consec vals");
-    return(x) })
-
-
-## Finding HFs that have leq 5 NAs and no more than 2 in a row
-imputing_HFs_maltreat_u5_list <- sapply(consec_NA_list_maltreat_u5_reshaped, function(x) {
-    na_rows <- which(x$is.NA == TRUE);
-    num_NAs <- sum(x[na_rows, "consec vals"]);
-    
-    if (num_NAs > 0 & num_NAs <= 6 & !(0 %in% as.numeric(x[na_rows, "consec vals"] <= 2)))
-    {
-        return(TRUE)
-    } else {
-        return(FALSE)
-    }
-})
-
-imputing_HFs_maltreat_u5_data <- HF_cases[which(HF_cases$UID %in% names(imputing_HFs_maltreat_u5_list[imputing_HFs_maltreat_u5_list == TRUE])),]
-imputing_HFs_maltreat_u5_data <- imputing_HFs_maltreat_u5_data[imputing_HFs_maltreat_u5_data$year != 2015,]
-
-
-imputing_HFs_maltreat_u5_data_list <- split(imputing_HFs_maltreat_u5_data$maltreat_u5, as.character(imputing_HFs_maltreat_u5_data$UID))
-
-new_imputed_HFs_maltreat_u5_data_list <- lapply(imputing_HFs_maltreat_u5_data_list, function(x) {
-    
-    cases_ts <- ts(x, start = c(2016, 1), deltat = 1/12);
-    imp_cases <- na_seadec(cases_ts, algorithm = "ma");
-    
-    
-    return(as.numeric(round(imp_cases))); # we round to preserve whole numbers
-})
-
-
-result_imputed_maltreat_u5_DF <- data.frame("UID" = sort(rep(names(new_imputed_HFs_maltreat_u5_data_list), 36)),
-                                            "Date" = rep(unique(HF_cases[HF_cases$year != 2015, "Date"]), length(new_imputed_HFs_maltreat_u5_data_list)),
-                                            "imputed_maltreat_u5" = unlist(new_imputed_HFs_maltreat_u5_data_list, use.names = F))
-
-for (U in unique(result_imputed_maltreat_u5_DF$UID))
-    HF_cases[which(HF_cases$UID == U & HF_cases$year != 2015), "maltreat_u5"] <- result_imputed_maltreat_u5_DF[which(result_imputed_maltreat_u5_DF$UID == U), "imputed_maltreat_u5"]
-
-
-
-####################################################################
-
 rle.try_conf_mic_u5 <- ddply(HF_cases, .(UID), summarize,
                              is_NA = rle(is.na(conf_mic_u5))[2],
                              consec_NAs = rle(is.na(conf_mic_u5))[1])
@@ -447,9 +279,6 @@ for (U in unique(result_imputed_conf_mic_u5_DF$UID))
 
 HF_cases[which(HF_cases$allout_u5 < 0), "allout_u5"] <- 0
 HF_cases[which(HF_cases$conf_rdt_u5 < 0), "conf_rdt_u5"] <- 0
-HF_cases[which(HF_cases$test_rdt_u5 < 0), "test_rdt_u5"] <- 0
-HF_cases[which(HF_cases$susp_u5 < 0), "susp_u5"] <- 0
-HF_cases[which(HF_cases$maltreat_u5 < 0), "maltreat_u5"] <- 0
 HF_cases[which(HF_cases$conf_mic_u5 < 0), "conf_mic_u5"] <- 0
 
 
@@ -457,17 +286,15 @@ HF_cases[which(HF_cases$conf_mic_u5 < 0), "conf_mic_u5"] <- 0
 
 
 HF_cases$conf_rdt_mic_u5 <- rowSums(HF_cases[,c("conf_rdt_u5", "conf_mic_u5")], na.rm = T)
-HF_cases$test_rdt_mic_u5 <- rowSums(HF_cases[,c("test_rdt_u5", "test_mic_u5")], na.rm = T)
 
 
 
-
-apply(HF_cases[,c("allout_u5", "conf_rdt_u5", "conf_mic_u5", "test_rdt_u5", "susp_u5", "maltreat_u5")], 2, function(y) sum(is.na(y)))
+apply(HF_cases[,c("allout_u5", "conf_rdt_u5", "conf_mic_u5")], 2, function(y) sum(is.na(y)))
 
 
 
 
 
-write.csv(HF_cases, "~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_testing_pres_MA.csv", row.names = FALSE)
+write.csv(HF_cases, "~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_MA.csv", row.names = FALSE)
 
 
