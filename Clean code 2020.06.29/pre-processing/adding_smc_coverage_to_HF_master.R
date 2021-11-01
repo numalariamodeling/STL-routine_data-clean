@@ -183,6 +183,15 @@ names(cases_new)[which(names(cases_new) == "Population")] <- "District Pop"
 cases_new$air_temp_era5 <- as.numeric(cases_new$air_temp_era5)
 cases_new$precip_era5 <- as.numeric(cases_new$precip_era5)
 
+
+
+
+
+
+
+
+
+
 # saving
 write.csv(cases_new, "~/Users/sebas/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_seasonal_smc.csv", row.names = FALSE)
 

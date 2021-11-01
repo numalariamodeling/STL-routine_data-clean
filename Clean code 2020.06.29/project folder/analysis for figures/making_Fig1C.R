@@ -1,3 +1,19 @@
+#######################################################
+##  Plotting health facility reporting for figure 1  ##
+#######################################################
+#
+# Description:
+#   Making Figure 1C on health facility reports received (complete or not)
+#
+#
+#  Sebastian Rodriguez (sebastian@rodriguez.cr)
+#  Last edited Oct 31, 2021
+#
+
+
+
+
+
 
 rm(list = ls(all = TRUE))
 
@@ -10,8 +26,7 @@ require("ggplot2")
 
 # Loading health facility dataset
 
-# HF_cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_MA_activeHFs.csv", stringsAsFactors = FALSE)
-HF_cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_MA_activeHFs_2.csv", stringsAsFactors = FALSE)
+HF_cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_MA_activeHFs.csv", stringsAsFactors = FALSE)
 
 
 HF_cases$Date <- as.Date(as.yearmon(HF_cases$Date))
@@ -116,27 +131,6 @@ HF_cases_area_by_District$Type <- factor(HF_cases_area_by_District$Type,
                                                     "good report"))
 
 
-
-
-
-
-
-
-
-# for (R in unique(HF_cases_area_by_District$Region))
-# {
-#     tmp_p <- ggplot(HF_cases_area_by_District[which(HF_cases_area_by_District$Region == R),],
-#                     aes(fill = Type, y = reports/total_HFs, x = Date))  + 
-#         geom_area() + 
-#         scale_x_date(expand = c(0,0)) +
-#         scale_y_continuous(expand = c(0,0)) +
-#         facet_wrap(~District) +
-#         theme(panel.spacing.x = unit(2, "mm"))
-#     
-#     pdf(paste("~/OneDrive/Desktop/SI_figures_cleaned_for_Bea/reporting_by_region/rep_", R, ".pdf", sep = ""))
-#     print(tmp_p)
-#     dev.off()
-# }
 
 
 

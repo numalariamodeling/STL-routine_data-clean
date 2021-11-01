@@ -3,11 +3,11 @@
 #######################################################
 #
 # Description:
-#   Making Figure 1 on health facility reports received (complete or not)
+#   Making Figure 1A on health facility reports received (complete or not)
 #
 #
 #  Sebastian Rodriguez (sebastian@rodriguez.cr)
-#  Last edited Mar 09, 2021
+#  Last edited Oct 31, 2021
 #
 
 
@@ -30,8 +30,7 @@ library("reshape2")
 ## Grabbing data and cleaning for making figure 1A
 
 
-# HF_cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_MA_activeHFs.csv")
-HF_cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_MA_activeHFs_2.csv")
+HF_cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_MA_activeHFs.csv")
 
 
 HF_cases$Date <- as.Date(as.yearmon(HF_cases$Date))
@@ -71,7 +70,6 @@ reporting_DF <- ddply(HF_cases, .(Date), summarize,
                       "good reports" = sum(good_obs),
                       "any reports" = sum(HF_reporting),
                       total_facilities = length(unique(UID)),
-                      # "active HFs" = count(HF_status)[1,2])
                       "active HFs" = table(HF_status)[1])
 reporting_DF$Date <- as.Date(as.yearmon(reporting_DF$Date))
 reporting_DF <- reporting_DF[order(reporting_DF$Date),]
@@ -90,13 +88,7 @@ reporting_DF_melted$variable <- factor(as.factor(reporting_DF_melted$variable),
 
 
 
-
-
 ## Figure 1
-# ggplot(reporting_DF) + geom_line(aes(x = Date, y = good_reports), col = "darkgreen") +
-#     geom_line(aes(x = Date, y = any_reports)) +
-#     scale_y_continuous(name = "Number of health facilities with complete reporting")
-# 
 
 
 ggplot(reporting_DF_melted,
@@ -111,4 +103,8 @@ ggplot(reporting_DF_melted,
     theme(axis.text.x = element_text(angle = 45, hjust = 1), 
           panel.border = element_blank(), panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
+
+
+
+
 

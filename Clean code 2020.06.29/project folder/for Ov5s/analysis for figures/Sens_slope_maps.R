@@ -1,15 +1,15 @@
-##############################################
-##  Seasonal Trend Decomposition SI figures ##
-##############################################
+#########################################
+##  Sens slope maps for SI for over-5s ##
+#########################################
 #
 # Description:
-#
+#   SI figure for Ov-5 sens slope maps
 #
 #
 #
 #
 #  Sebastian Rodriguez (sebastian@rodriguez.cr)
-#  Last edited Dec 13, 2020
+#  Last edited Oct 31, 2021
 #
 #
 

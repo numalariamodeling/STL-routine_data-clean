@@ -1,3 +1,16 @@
+##########################################
+##  Plotting district level timeseries  ##
+##########################################
+#
+# Description:
+#   Making timeseries figures for figure 1, 2, and 4
+#
+#
+#  Sebastian Rodriguez (sebastian@rodriguez.cr)
+#  Last edited Oct 31, 2021
+#
+
+
 
 
 rm(list = ls(all = TRUE))
@@ -55,7 +68,7 @@ ggplot(cases, aes(x = Date, y = weighted_rep_rate,
 
 ## Figure 2A
 
-ggplot(cases, aes(x = Date, y = conf_rdt_mic_u5 / test_rdt_mic_u5,
+ggplot(cases, aes(x = Date, y = conf_rdt_mic_u5 / (U5_pop/1000),
                   group = as.factor(District))) +
     geom_line(alpha = 0.25, size = 1, show.legend = FALSE, color = "blue") + ylab("Test positivity rate") +
     ggtitle("") +
@@ -69,7 +82,7 @@ ggplot(cases, aes(x = Date, y = conf_rdt_mic_u5 / test_rdt_mic_u5,
 
 
 
-## Figure 2A
+## Figure 2D
 
 cases$cases_rep_weighted_adj <- cases$conf_rdt_mic_u5 / cases$weighted_rep_rate
 
@@ -112,7 +125,7 @@ ggplot(cases, aes(x = Date, y = allout_rep_weighted_adj / (U5_pop/1000),
 
 
 
-## Figure 4A
+## Figure 4B
 
 ggplot(cases, aes(x = Date, y = (allout_rep_weighted_adj - cases_rep_weighted_adj) / (U5_pop/1000),
                   group = as.factor(District))) +
@@ -130,7 +143,7 @@ ggplot(cases, aes(x = Date, y = (allout_rep_weighted_adj - cases_rep_weighted_ad
 
 
 
-## Figure 4A
+## Figure 4C
 
 ggplot(cases, aes(x = Date, y = cases_rep_weighted_adj / allout_rep_weighted_adj,
                   group = as.factor(District))) +

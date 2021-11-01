@@ -1,23 +1,15 @@
-#############################################
-##  Seasonal Trend Decomposition Figure 7  ##
-#############################################
+########################################################
+##  Seasonal Trend Decomposition for ov-5s main text  ##
+########################################################
 #
 # Description:
-#   Creating the output for figure 7 in the main text
-#   Seasonal trend decomposition for all districts grouped by SMC rollout group
-#   Decomposing crude incidence and malaria share of outpatient visits variables
-#   Only trend component is plotted, for individual districts
-#       and aggregate rollout group
-#   All data was standardized for comparison between groups and
-#       for comparison to figure 6
-#       
-#   Figure was further cleaned and assembled in Adobe Illustrator
+#   Making main text figures for Ov-5 trend component time-series
 #
 #
 #
 #
 #  Sebastian Rodriguez (sebastian@rodriguez.cr)
-#  Last edited Mar 09, 2021
+#  Last edited Oct 31, 2021
 #
 
 
@@ -419,100 +411,40 @@ ggplot(data = STL_result_DF, aes(x = dates, y = trend)) +
 
 
 ################################################################################
-
-
-## SI figure for trend components
+# 
 # 
 # 
 # for (i in seq(1,70,4))
 # {
 #     # Select 4 district for plotting
 # 
-#     DS_list <- unique(STL_result_DF[order(STL_result_DF$Region, STL_result_DF$District), "District"])[i:(i+3)]
-#     
+# 
+#     DS_list <- sort(unique(STL_result_DF$District))[i:(i+3)]
+# 
 #     plotting_DF <- STL_result_DF[which(STL_result_DF$District %in% DS_list),]
-#     plotting_DF$facet_group <- paste(plotting_DF$District, plotting_DF$Region, sep = ", ")
-#     plotting_DF$District <- str_to_title(plotting_DF$District)
-#     
-#     
-#     plot_trend_1 <- ggplot(plotting_DF[which(plotting_DF$type %in% c("cases", "rep_weighted_adj", "linear_trtseeking_adj",
-#                                                                      "step1_trtseeking_adj", "step2_trtseeking_adj")),],
-#                            aes(x = dates, y = trend)) +
+# 
+# 
+#     plot_trend <- ggplot(plotting_DF, aes(x = dates, y = trend)) +
 #         geom_line(aes(group = type, linetype = "solid",
-#                       color = factor(type, levels = c("cases", "rep_weighted_adj", "linear_trtseeking_adj",
-#                                                       "step1_trtseeking_adj", "step2_trtseeking_adj"))),
+#                       color = factor(type, levels = c("cases", "rep_weighted_adj",
+#                                                       "allout_rep_weighted_adj", "all_nonMal_rep_weighted_adj",
+#                                                       "ratio_weighted"))),
 #                   show.legend = F) +
-#         scale_color_manual("", values = c("#913058", "#F6851F", "#00A08A", "#8971B3", "#D61B5A")) + scale_linetype_identity("") + 
-#         xlab("") + ylab("") + facet_wrap(~District, ncol = 4, scales = "free_y") +
+#         scale_color_manual("", values = c("#913058", "#F6851F",
+#                                           "#5393C3", "#F1A31F", "#98B548")) + scale_linetype_identity("") +
+#         xlab("") + facet_wrap(~District, ncol = 4) +
 #         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-#               panel.background = element_blank(), axis.line = element_line(colour = "black", size = 0.5),
-#               panel.spacing.x = unit(2, "mm"), strip.background = element_blank(),
-#               axis.text = element_text(colour = "black", size = 8),
-#               axis.ticks = element_line(colour = "black", size = 0.5),
-#               axis.text.x = element_text(angle = 45, hjust = 1))
-#     
-#     
-#     plot_trend_2 <- ggplot(plotting_DF[which(plotting_DF$type %in% c("allout_rep_weighted_adj", "all_nonMal_rep_weighted_adj", "ratio_weighted")),],
-#                            aes(x = dates, y = trend)) +
-#         geom_line(aes(group = type, linetype = "solid",
-#                       color = factor(type, levels = c("allout_rep_weighted_adj", "all_nonMal_rep_weighted_adj", "ratio_weighted"))),
-#                   show.legend = F) +
-#         scale_color_manual("", values = c("#5393C3", "#F1A31F", "#98B548")) + scale_linetype_identity("") + 
-#         xlab("") + ylab("") + facet_wrap(~District, ncol = 4, scales = "free_y") +
-#         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-#               panel.background = element_blank(), axis.line = element_line(colour = "black", size = 0.5),
-#               panel.spacing.x = unit(2, "mm"), strip.background = element_blank(),
-#               axis.text = element_text(colour = "black", size = 8),
-#               axis.ticks = element_line(colour = "black", size = 0.5),
-#               axis.text.x = element_text(angle = 45, hjust = 1))
-#     
-#     
-#     
+#               panel.background = element_blank(), axis.line = element_line(colour = "black"),
+#               panel.spacing.x = unit(6, "mm"))
+# 
+# 
+# 
+# 
 #     # Saving SI plots
-#     pdf(paste("~/OneDrive/Desktop/SI_figures_STL_paper_ov5/SI_decomp_v2_", i, ".pdf", sep = ""),
-#         width = 5.75, height = 2.8)
-#     grid.arrange(plot_trend_1, plot_trend_2, nrow = 2)
+#     pdf(paste("~/OneDrive/Desktop/SI_figures_STL_paper_ov5/SI_decomp_", i, ".pdf", sep = ""))
+#     print(plot_trend)
 #     dev.off()
 # 
-# }
-
-
-
-
-
-
-
-for (i in seq(1,70,4))
-{
-    # Select 4 district for plotting
-
-
-    DS_list <- sort(unique(STL_result_DF$District))[i:(i+3)]
-
-    plotting_DF <- STL_result_DF[which(STL_result_DF$District %in% DS_list),]
-
-
-    plot_trend <- ggplot(plotting_DF, aes(x = dates, y = trend)) +
-        geom_line(aes(group = type, linetype = "solid",
-                      color = factor(type, levels = c("cases", "rep_weighted_adj",
-                                                      "allout_rep_weighted_adj", "all_nonMal_rep_weighted_adj",
-                                                      "ratio_weighted"))),
-                  show.legend = F) +
-        scale_color_manual("", values = c("#913058", "#F6851F",
-                                          "#5393C3", "#F1A31F", "#98B548")) + scale_linetype_identity("") +
-        xlab("") + facet_wrap(~District, ncol = 4) +
-        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-              panel.background = element_blank(), axis.line = element_line(colour = "black"),
-              panel.spacing.x = unit(6, "mm"))
-
-
-
-
-    # Saving SI plots
-    pdf(paste("~/OneDrive/Desktop/SI_figures_STL_paper_ov5/SI_decomp_", i, ".pdf", sep = ""))
-    print(plot_trend)
-    dev.off()
-
 
 }
 

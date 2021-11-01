@@ -1,15 +1,15 @@
-##############################################
-##  Seasonal Trend Decomposition SI figures ##
-##############################################
+################################
+##  Sens slope for SI figures ##
+################################
 #
 # Description:
-#
-#
+#   Making Sens slope figures for SI figures and main text too
+#   Using this to make TPR and testing maps
 #
 #
 #
 #  Sebastian Rodriguez (sebastian@rodriguez.cr)
-#  Last edited Dec 13, 2020
+#  Last edited Oct 31, 2021
 #
 #
 
@@ -55,7 +55,7 @@ getNormalized <- function(vec)
 # Loading health district dataset
 # Creating under-5 population column and fixing date column
 
-cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_DS_cases_seasonal_smc_good_rows_MA_imputes_w_rep_weights_activeHFs.csv", header  = TRUE, strip.white = TRUE, stringsAsFactors = FALSE)
+cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_DS_cases_seasonal_smc_good_rows_MA_imputes_testing_w_rep_weights.csv", header  = TRUE, strip.white = TRUE, stringsAsFactors = FALSE)
 cases$U5_pop <- cases$District.Pop * .18
 cases$Date <- as.yearmon(cases$Date)
 
@@ -71,6 +71,7 @@ cases <- cases[order(cases$District, cases$Date),]
 
 
 cases$mal_cases <- cases$conf_rdt_mic_u5 / (cases$U5_pop/1000)
+cases$mal_test <- cases$test_rdt_mic_u5 / (cases$U5_pop/1000)
 cases$all_cases <- cases$allout_u5 / (cases$U5_pop/1000)
 
 
@@ -190,7 +191,8 @@ cases$cases_step2_trtseeking_adj <- (cases$mal_cases / cases$medfever_regional) 
 
 
 cases$cases_rep_weighted_adj <- cases$mal_cases / cases$weighted_rep_rate
-
+cases$tests_rep_weighted_adj <- cases$mal_test / cases$weighted_rep_rate
+cases$TPR <- cases$conf_rdt_mic_u5 / cases$test_rdt_mic_u5
 
 
 cases$all_cases_rep_weighted_adj <- cases$all_cases / cases$weighted_rep_rate_all_cause
@@ -226,6 +228,10 @@ step2_trt_adj_pouytenga_Dec_2017 <- mean(c(cases$cases_step2_trtseeking_adj[pouy
 
 weight_rep_adj_pouytenga_Dec_2017 <- mean(c(cases$cases_rep_weighted_adj[pouytenga_ind_Nov_2017],
                                             cases$cases_rep_weighted_adj[pouytenga_ind_Jan_2018]))
+mal_tests_pouytenga_Dec_2017 <- mean(c(cases$tests_rep_weighted_adj[pouytenga_ind_Nov_2017],
+                                       cases$tests_rep_weighted_adj[pouytenga_ind_Jan_2018]))
+TPR_pouytenga_Dec_2017 <- mean(c(cases$TPR[pouytenga_ind_Nov_2017],
+                                 cases$TPR[pouytenga_ind_Jan_2018]))
 
 all_cases_weight_rep_adj_pouytenga_Dec_2017 <- mean(c(cases$all_cases_rep_weighted_adj[pouytenga_ind_Nov_2017],
                                                       cases$all_cases_rep_weighted_adj[pouytenga_ind_Jan_2018]))
@@ -244,6 +250,8 @@ pouytenga_Dec_2017_row_tmp$cases_linear_trtseeking_adj <- linear_trt_adj_pouyten
 pouytenga_Dec_2017_row_tmp$cases_step1_trtseeking_adj <- step1_trt_adj_pouytenga_Dec_2017
 pouytenga_Dec_2017_row_tmp$cases_step2_trtseeking_adj <- step2_trt_adj_pouytenga_Dec_2017
 pouytenga_Dec_2017_row_tmp$cases_rep_weighted_adj <- weight_rep_adj_pouytenga_Dec_2017
+pouytenga_Dec_2017_row_tmp$tests_rep_weighted_adj <- mal_tests_pouytenga_Dec_2017
+pouytenga_Dec_2017_row_tmp$TPR <- TPR_pouytenga_Dec_2017
 pouytenga_Dec_2017_row_tmp$all_cases_rep_weighted_adj <- all_cases_weight_rep_adj_pouytenga_Dec_2017
 pouytenga_Dec_2017_row_tmp$all_nonMal_cases_rep_weighted_adj <- all_nonMal_weight_rep_adj_pouytenga_Dec_2017
 pouytenga_Dec_2017_row_tmp$mal_ratio_weighted <- mal_ratio_weighted_pouytenga_Dec_2017
@@ -275,42 +283,52 @@ for (DS in sort(unique(cases$District)))
     
     # Create crude incidence variable
     # Standardize it, make it a timeseries object, and decompose it
-    mal_cases_norm <- getNormalized(log(cases_dist$mal_cases))
+    mal_cases_norm <- getNormalized(cases_dist$mal_cases)
     mal_cases_norm_ts <- ts(mal_cases_norm, start = c(2015, 1), deltat = 1/12)
     cases_stl <- stlplus(mal_cases_norm_ts, s.window="periodic")
     
     
-    linear_trt_adj_norm <- getNormalized(log(cases_dist$cases_linear_trtseeking_adj))
+    linear_trt_adj_norm <- getNormalized(cases_dist$cases_linear_trtseeking_adj)
     linear_trt_adj_norm_ts <- ts(linear_trt_adj_norm, start = c(2015, 1), deltat = 1/12)
     linear_trt_adj_stl <- stlplus(linear_trt_adj_norm_ts, s.window="periodic")
     
     
-    step1_trt_adj_norm <- getNormalized(log(cases_dist$cases_step1_trtseeking_adj))
+    step1_trt_adj_norm <- getNormalized(cases_dist$cases_step1_trtseeking_adj)
     step1_trt_adj_norm_ts <- ts(step1_trt_adj_norm, start = c(2015, 1), deltat = 1/12)
     step1_trt_adj_stl <- stlplus(step1_trt_adj_norm_ts, s.window="periodic")
     
     
-    step2_trt_adj_norm <- getNormalized(log(cases_dist$cases_step2_trtseeking_adj))
+    step2_trt_adj_norm <- getNormalized(cases_dist$cases_step2_trtseeking_adj)
     step2_trt_adj_norm_ts <- ts(step2_trt_adj_norm, start = c(2015, 1), deltat = 1/12)
     step2_trt_adj_stl <- stlplus(step2_trt_adj_norm_ts, s.window="periodic")
     
     
-    rep_weighted_adj_norm <- getNormalized(log(cases_dist$cases_rep_weighted_adj))
+    rep_weighted_adj_norm <- getNormalized(cases_dist$cases_rep_weighted_adj)
     rep_weighted_adj_norm_ts <- ts(rep_weighted_adj_norm, start = c(2015, 1), deltat = 1/12)
     rep_weighted_adj_stl <- stlplus(rep_weighted_adj_norm_ts, s.window="periodic")
     
     
-    all_cases_rep_weighted_adj_norm <- getNormalized(log(cases_dist$all_cases_rep_weighted_adj))
+    tests_rep_weighted_adj_norm <- getNormalized(cases_dist$tests_rep_weighted_adj)
+    tests_rep_weighted_adj_norm_ts <- ts(tests_rep_weighted_adj_norm, start = c(2015, 1), deltat = 1/12)
+    tests_rep_weighted_adj_stl <- stlplus(tests_rep_weighted_adj_norm_ts, s.window = "periodic")
+    
+    
+    TPR_norm <- getNormalized(cases_dist$TPR)
+    TPR_norm_ts <- ts(TPR_norm, start = c(2015, 1), deltat = 1/12)
+    TPR_stl <- stlplus(TPR_norm_ts, s.window = "periodic")
+    
+    
+    all_cases_rep_weighted_adj_norm <- getNormalized(cases_dist$all_cases_rep_weighted_adj)
     all_cases_rep_weighted_adj_norm_ts <- ts(all_cases_rep_weighted_adj_norm, start = c(2015, 1), deltat = 1/12)
     all_cases_rep_weighted_adj_stl <- stlplus(all_cases_rep_weighted_adj_norm_ts, s.window="periodic")
     
     
-    all_nonMal_rep_weighted_adj_norm <- getNormalized(log(cases_dist$all_nonMal_cases_rep_weighted_adj))
+    all_nonMal_rep_weighted_adj_norm <- getNormalized(cases_dist$all_nonMal_cases_rep_weighted_adj)
     all_nonMal_rep_weighted_adj_norm_ts <- ts(all_nonMal_rep_weighted_adj_norm, start = c(2015, 1), deltat = 1/12)
     all_nonMal_rep_weighted_adj_stl <- stlplus(all_nonMal_rep_weighted_adj_norm_ts, s.window="periodic")
     
     
-    mal_ratio_weighted_norm <- getNormalized(log(cases_dist$mal_ratio_weighted / (1 - cases_dist$mal_ratio_weighted)))
+    mal_ratio_weighted_norm <- getNormalized(cases_dist$mal_ratio_weighted)
     mal_ratio_weighted_norm_ts <- ts(mal_ratio_weighted_norm, start = c(2015, 1), deltat = 1/12)
     ratio_weighted_stl <- stlplus(mal_ratio_weighted_norm_ts, s.window="periodic")
     
@@ -355,6 +373,20 @@ for (DS in sort(unique(cases$District)))
     rep_weighted_adj_stl_ts$sens_slope <- sea.sens.slope(rep_weighted_adj_norm_ts)
     
     
+    tests_rep_weighted_adj_stl_ts <- as.data.frame(tests_rep_weighted_adj_stl$data[,1:4])
+    tests_rep_weighted_adj_stl_ts$type <- rep("tests_rep_weighted_adj", nrow(tests_rep_weighted_adj_stl_ts))
+    tests_rep_weighted_adj_stl_ts$dates <- dates
+    tests_rep_weighted_adj_stl_ts$MK_p <- smk.test(tests_rep_weighted_adj_norm_ts)$p.value
+    tests_rep_weighted_adj_stl_ts$sens_slope <- sea.sens.slope(tests_rep_weighted_adj_norm_ts)
+    
+    
+    TPR_stl_ts <- as.data.frame(TPR_stl$data[,1:4])
+    TPR_stl_ts$type <- rep("TPR", nrow(TPR_stl_ts))
+    TPR_stl_ts$dates <- dates
+    TPR_stl_ts$MK_p <- smk.test(TPR_norm_ts)$p.value
+    TPR_stl_ts$sens_slope <- sea.sens.slope(TPR_norm_ts)
+    
+    
     all_cases_rep_weighted_adj_stl_ts <- as.data.frame(all_cases_rep_weighted_adj_stl$data[,1:4]) 
     all_cases_rep_weighted_adj_stl_ts$type <- rep("allout_rep_weighted_adj", nrow(all_cases_rep_weighted_adj_stl_ts))
     all_cases_rep_weighted_adj_stl_ts$dates <- dates
@@ -385,6 +417,8 @@ for (DS in sort(unique(cases$District)))
                                    step1_trt_adj_stl_ts,
                                    step2_trt_adj_stl_ts,
                                    rep_weighted_adj_stl_ts,
+                                   tests_rep_weighted_adj_stl_ts,
+                                   TPR_stl_ts,
                                    all_cases_rep_weighted_adj_stl_ts,
                                    all_nonMal_rep_weighted_adj_stl_ts,
                                    ratio_weighted_stl_ts)
@@ -453,7 +487,7 @@ ggplot(data = burkina_shape_DF_sens, aes(x = long, y = lat, group = group)) +
                  aes(x = long, y = lat, group = group),
                  color = "black", fill = NA) + coord_equal() + 
     scale_fill_gradient2("Sen's slope coefficient", low = "#4575B4", mid = "#FFFFBF", high = "#D73027",
-                         midpoint = 0, n.breaks = 6,
+                         midpoint = 0,
                          limits = range(burkina_shape_DF_sens$plotting_sens_slope, na.rm = T)) +
     theme_void() + theme(plot.title = element_text(hjust = 0.5)) + facet_wrap(~type, ncol = 3)
 
@@ -461,27 +495,8 @@ ggplot(data = burkina_shape_DF_sens, aes(x = long, y = lat, group = group)) +
 
 
 
-
-
-
 STL_result_DF_slopes_new <- dcast(STL_result_DF_slopes, District ~ type, value.var = "plotting_sens_slope", sum)
 
-
-View(STL_result_DF_slopes_new[which(STL_result_DF_slopes_new$rep_weighted_adj > 0 &
-                                        (is.na(STL_result_DF_slopes_new$linear_trt_adj) |
-                                             STL_result_DF_slopes_new$linear_trt_adj < 0)),])
+View(STL_result_DF_slopes_new)
 
 
-View(STL_result_DF_slopes_new[which(STL_result_DF_slopes_new$rep_weighted_adj > 0 &
-                                        (is.na(STL_result_DF_slopes_new$step1_trt_adj) |
-                                             STL_result_DF_slopes_new$step1_trt_adj < 0)),])
-
-
-View(STL_result_DF_slopes_new[which(STL_result_DF_slopes_new$rep_weighted_adj > 0 &
-                                        (is.na(STL_result_DF_slopes_new$step2_trt_adj) |
-                                             STL_result_DF_slopes_new$step2_trt_adj < 0)),])
-
-
-
-
-STL_result_DF_slopes_new_b <- cbind(STL_result_DF_slopes_new[,1], sign(STL_result_DF_slopes_new[,2:ncol(STL_result_DF_slopes_new)]))

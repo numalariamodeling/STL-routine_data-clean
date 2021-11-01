@@ -1,11 +1,10 @@
-######################################################
-##  Imputing observations at health facility level  ##
-######################################################
+#####################################################
+##  Active/Inactive health facility determination  ##
+#####################################################
 #
 # Description:
-#   Imputing health facility observations for confirmed rdt cases and all-cause outpatient cases
-#       with Kilman smoothing. Only impute from HFs missing less than or equal to 5 obs and no more than 2
-#       in a row
+#
+#   Making health facilities active/inactive
 #
 #
 #  Sebastian Rodriguez (sebastian@rodriguez.cr)
@@ -145,10 +144,34 @@ HF_cases_active <- left_join(HF_cases, HF_active, by = c("UID", "Date"))
 
 
 
-write.csv(HF_cases_active, "~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_MA_activeHFs_2.csv", row.names = FALSE)
+write.csv(HF_cases_active, "~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_MA_activeHFs.csv", row.names = FALSE)
 
 
 
 
 
 
+
+
+
+
+
+
+
+
+
+#### Checking which HFs became active / became inactive
+
+rle.try_active <- ddply(HF_cases_active, .(UID), summarize,
+                        is_inactive = rle(HF_status == "inactive")[2],
+                        consec_inactive = rle(HF_status == "inactive")[1])
+
+
+flipping_HFs <- rle.try_active[which(sapply(rle.try_active$is_inactive, function(x) (FALSE %in% x & TRUE %in% x))),]
+
+# inactive to active
+flipping_HFs[which(sapply(flipping_HFs $is_inactive, function(x) (x[1]) ) ),] %>% View
+
+
+# active to inactive
+flipping_HFs[which(sapply(flipping_HFs $is_inactive, function(x) (x[length(x)]) ) ),] %>% View

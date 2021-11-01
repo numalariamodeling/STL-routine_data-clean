@@ -3,7 +3,8 @@
 ##############################################
 #
 # Description:
-#   Cleaning health facility data for exclusion criteria prior to aggregation to health district
+#   Cleaning health facility data for exclusion criteria prior
+#   to aggregation to health district and finishing to calculate the reporting rate
 #
 #
 #  Sebastian Rodriguez (sebastian@rodriguez.cr)
@@ -24,8 +25,7 @@ require("lubridate")
 
 # Loading health facility dataset
 
-# HF_cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_MA_activeHFs.csv", stringsAsFactors = FALSE)
-HF_cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_MA_activeHFs_2.csv", stringsAsFactors = FALSE)
+HF_cases <- read.csv("~/Box/NU-malaria-team/projects/smc_impact/data/outputs/U5_HF_cases_smc_coords_imputed_rdts_and_allout_MA_activeHFs.csv", stringsAsFactors = FALSE)
 HF_cases$Date <- as.yearmon(HF_cases$Date)
 
 

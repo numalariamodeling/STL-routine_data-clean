@@ -1,15 +1,15 @@
-##############################################
-##  Seasonal Trend Decomposition SI figures ##
-##############################################
+############################################
+##  Sens slope maps for main text figures ##
+############################################
 #
 # Description:
-#
+#   Making figures for Sens Slope maps
 #
 #
 #
 #
 #  Sebastian Rodriguez (sebastian@rodriguez.cr)
-#  Last edited Dec 13, 2020
+#  Last edited Oct 31, 2021
 #
 #
 
@@ -188,7 +188,7 @@ cases$cases_step1_trtseeking_adj <- (cases$mal_cases / cases$medfever_regional_s
 cases$cases_step2_trtseeking_adj <- (cases$mal_cases / cases$medfever_regional) / cases$weighted_rep_rate
 
 
-
+cases$cases_rep_adj <- cases$mal_cases / cases$rep_rate
 cases$cases_rep_weighted_adj <- cases$mal_cases / cases$weighted_rep_rate
 
 
@@ -224,6 +224,8 @@ step1_trt_adj_pouytenga_Dec_2017 <- mean(c(cases$cases_step1_trtseeking_adj[pouy
 step2_trt_adj_pouytenga_Dec_2017 <- mean(c(cases$cases_step2_trtseeking_adj[pouytenga_ind_Nov_2017],
                                            cases$cases_step2_trtseeking_adj[pouytenga_ind_Jan_2018]))
 
+rep_adj_pouytenga_Dec_2017 <- mean(c(cases$cases_rep_adj[pouytenga_ind_Nov_2017],
+                                     cases$cases_rep_adj[pouytenga_ind_Jan_2018]))
 weight_rep_adj_pouytenga_Dec_2017 <- mean(c(cases$cases_rep_weighted_adj[pouytenga_ind_Nov_2017],
                                             cases$cases_rep_weighted_adj[pouytenga_ind_Jan_2018]))
 
@@ -243,6 +245,7 @@ pouytenga_Dec_2017_row_tmp$mal_cases <- mal_cases_pouytenga_Dec_2017
 pouytenga_Dec_2017_row_tmp$cases_linear_trtseeking_adj <- linear_trt_adj_pouytenga_Dec_2017
 pouytenga_Dec_2017_row_tmp$cases_step1_trtseeking_adj <- step1_trt_adj_pouytenga_Dec_2017
 pouytenga_Dec_2017_row_tmp$cases_step2_trtseeking_adj <- step2_trt_adj_pouytenga_Dec_2017
+pouytenga_Dec_2017_row_tmp$cases_rep_adj <- rep_adj_pouytenga_Dec_2017
 pouytenga_Dec_2017_row_tmp$cases_rep_weighted_adj <- weight_rep_adj_pouytenga_Dec_2017
 pouytenga_Dec_2017_row_tmp$all_cases_rep_weighted_adj <- all_cases_weight_rep_adj_pouytenga_Dec_2017
 pouytenga_Dec_2017_row_tmp$all_nonMal_cases_rep_weighted_adj <- all_nonMal_weight_rep_adj_pouytenga_Dec_2017
@@ -293,6 +296,11 @@ for (DS in sort(unique(cases$District)))
     step2_trt_adj_norm <- getNormalized(cases_dist$cases_step2_trtseeking_adj)
     step2_trt_adj_norm_ts <- ts(step2_trt_adj_norm, start = c(2015, 1), deltat = 1/12)
     step2_trt_adj_stl <- stlplus(step2_trt_adj_norm_ts, s.window="periodic")
+    
+    
+    rep_adj_norm <- getNormalized(cases_dist$cases_rep_adj)
+    rep_adj_norm_ts <- ts(rep_adj_norm, start = c(2015, 1), deltat = 1/12)
+    rep_adj_stl <- stlplus(rep_adj_norm_ts, s.window="periodic")
     
     
     rep_weighted_adj_norm <- getNormalized(cases_dist$cases_rep_weighted_adj)
@@ -348,6 +356,13 @@ for (DS in sort(unique(cases$District)))
     step2_trt_adj_stl_ts$sens_slope <- sea.sens.slope(step2_trt_adj_norm_ts)
   
     
+    rep_adj_stl_ts <- as.data.frame(rep_adj_stl$data[,1:4]) 
+    rep_adj_stl_ts$type <- rep("rep_adj", nrow(rep_adj_stl_ts))
+    rep_adj_stl_ts$dates <- dates
+    rep_adj_stl_ts$MK_p <- smk.test(rep_adj_norm_ts)$p.value
+    rep_adj_stl_ts$sens_slope <- sea.sens.slope(rep_adj_norm_ts)
+    
+    
     rep_weighted_adj_stl_ts <- as.data.frame(rep_weighted_adj_stl$data[,1:4]) 
     rep_weighted_adj_stl_ts$type <- rep("rep_weighted_adj", nrow(rep_weighted_adj_stl_ts))
     rep_weighted_adj_stl_ts$dates <- dates
@@ -384,6 +399,7 @@ for (DS in sort(unique(cases$District)))
                                    linear_trt_adj_stl_ts,
                                    step1_trt_adj_stl_ts,
                                    step2_trt_adj_stl_ts,
+                                   rep_adj_stl_ts,
                                    rep_weighted_adj_stl_ts,
                                    all_cases_rep_weighted_adj_stl_ts,
                                    all_nonMal_rep_weighted_adj_stl_ts,
@@ -462,6 +478,14 @@ ggplot(data = burkina_shape_DF_sens, aes(x = long, y = lat, group = group)) +
 
 
 
+
+
+
+
+
+
+
+## Looking up some numbers
 
 
 STL_result_DF_slopes_new <- dcast(STL_result_DF_slopes, District ~ type, value.var = "plotting_sens_slope", sum)
